@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# build
+dist/
+build/
+
+# env
+.env
+.env.*
+
+# misc
+.DS_Store
+desktop.ini
+
+# logs
+*.log
+
+# coverage
+coverage/
+
+# frontend/backend caches
+.cache/
+.next/
+

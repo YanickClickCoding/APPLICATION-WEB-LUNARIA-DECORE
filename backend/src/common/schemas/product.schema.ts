@@ -1,0 +1,33 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+
+export type ProductDocument = Product & Document;
+
+@Schema({ timestamps: true })
+export class Product {
+  @Prop({ required: true }) name: string;
+  @Prop({ required: true, unique: true }) slug: string;
+  @Prop({ required: true }) description: string;
+  @Prop() shortDescription: string;
+  @Prop({ required: true }) price: number;
+  @Prop() comparePrice: number;
+  @Prop([String]) images: string[];
+  @Prop({ type: Types.ObjectId, ref: 'Category' }) category: Types.ObjectId;
+  @Prop([String]) tags: string[];
+  @Prop({ default: 0 }) stock: number;
+  @Prop({ default: true }) isAvailable: boolean;
+  @Prop({ default: false }) isFeatured: boolean;
+  @Prop({ default: false }) isArchived: boolean;
+  @Prop({
+    type: {
+      average: { type: Number, default: 0 },
+      count: { type: Number, default: 0 },
+    },
+    default: () => ({ average: 0, count: 0 }),
+  })
+  ratings: { average: number; count: number };
+}
+
+export const ProductSchema = SchemaFactory.createForClass(Product);
+ProductSchema.index({ name: 'text', description: 'text', tags: 'text' });
+ProductSchema.index({ category: 1, isAvailable: 1 });
