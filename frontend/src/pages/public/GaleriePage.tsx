@@ -16,7 +16,7 @@ export default function GaleriePage() {
     <div>
       {/* Hero */}
       <div style={{ background: 'var(--night)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', bottom: -120, left: -80, width: 460, height: 460, borderRadius: '50%', background: 'radial-gradient(circle, rgba(233,69,96,.18), transparent 62%)' }} />
+        <div style={{ position: 'absolute', bottom: -120, left: -80, width: 460, height: 460, borderRadius: '50%', background: 'radial-gradient(circle, rgba(236,72,153,.18), transparent 62%)' }} />
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '64px 56px', position: 'relative', textAlign: 'center' }} className="lun-pad">
           <div className="eyebrow" style={{ color: 'var(--gold)' }}>Nos réalisations</div>
           <h1 className="display" style={{ fontSize: 60, margin: '14px 0 0' }}>Galerie</h1>
@@ -41,7 +41,7 @@ export default function GaleriePage() {
                 style={{ breakInside: 'avoid', marginBottom: 16, borderRadius: 'var(--r-md)', overflow: 'hidden', cursor: 'zoom-in', position: 'relative' }}
                 className="lun-gal-item">
                 <img src={item.src} alt={item.cat} style={{ width: '100%', display: 'block' }} />
-                <div className="lun-gal-overlay" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,26,46,.78), transparent 55%)', opacity: 0, transition: 'opacity .3s', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 16 }}>
+                <div className="lun-gal-overlay" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(43,20,36,.78), transparent 55%)', opacity: 0, transition: 'opacity .3s', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 16 }}>
                   <span style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase' }}>{item.occasion}</span>
                   <span className="serif" style={{ color: '#fff', fontSize: 18, fontWeight: 600 }}>{item.cat}</span>
                 </div>
@@ -61,7 +61,7 @@ export default function GaleriePage() {
 
       {/* Lightbox */}
       {lightbox !== null && (
-        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(26,26,46,.92)', zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(43,20,36,.92)', zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <button onClick={() => setLightbox(null)} style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
             <Icon name="close" size={18} color="#fff" />
           </button>

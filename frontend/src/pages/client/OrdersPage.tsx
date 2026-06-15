@@ -9,8 +9,8 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 const fmt = (n: number) => n.toLocaleString('fr-FR') + ' F'
 const STATUS_COLORS: Record<string, string> = {
-  EN_ATTENTE: 'var(--gold)', CONFIRME: 'var(--gold)', EN_PREPARATION: 'var(--gold)',
-  PRET: 'var(--coral)', EN_LIVRAISON: 'var(--coral)', LIVRE: '#3ec47a', ANNULE: 'var(--muted)',
+  EN_ATTENTE: 'var(--muted)', CONFIRME: '#3b82f6', EN_PREPARATION: 'var(--gold)',
+  PRET: '#8b5cf6', EN_LIVRAISON: 'var(--coral)', LIVRE: '#3ec47a', ANNULE: '#ef4444',
 }
 const STATUS_LABELS: Record<string, string> = {
   EN_ATTENTE: 'En attente', CONFIRME: 'Confirmé', EN_PREPARATION: 'En préparation',

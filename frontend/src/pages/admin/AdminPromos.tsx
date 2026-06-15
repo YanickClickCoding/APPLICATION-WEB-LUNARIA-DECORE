@@ -45,7 +45,7 @@ function PromoForm({ onClose }: { onClose: () => void }) {
 
   return (
     <div onClick={(e) => e.target === e.currentTarget && onClose()}
-      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(26,26,46,.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(43,20,36,.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div className="card" style={{ width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--sh-lg)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--line-2)' }}>
           <h2 className="serif" style={{ fontSize: 24, fontWeight: 600 }}>Nouveau code promo</h2>
@@ -131,7 +131,7 @@ export default function AdminPromos() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
           {rows.map((p) => (
-            <div key={p._id} className="card" style={{ padding: 22, boxShadow: 'var(--sh-sm)', opacity: p.isActive ? 1 : 0.6, borderColor: p.isActive ? 'rgba(233,69,96,.3)' : 'var(--line-2)' }}>
+            <div key={p._id} className="card" style={{ padding: 22, boxShadow: 'var(--sh-sm)', opacity: p.isActive ? 1 : 0.6, borderColor: p.isActive ? 'rgba(236,72,153,.3)' : 'var(--line-2)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                 <button onClick={() => copyCode(p.code)} title="Copier"
                   style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>

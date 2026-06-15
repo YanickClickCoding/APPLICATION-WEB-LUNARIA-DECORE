@@ -77,7 +77,7 @@ export class PaymentsService {
       await payment.save();
     } catch (err) {
       // En sandbox ou si API indispo, on simule
-      console.warn('[MTN MoMo] Simulation mode:', err.message);
+      console.warn('[MTN MoMo] Simulation mode:', (err as Error).message);
       payment.status = 'EN_COURS';
       await payment.save();
     }
@@ -126,7 +126,7 @@ export class PaymentsService {
       payment.status = 'EN_COURS';
       await payment.save();
     } catch (err) {
-      console.warn('[Moov Money] Simulation mode:', err.message);
+      console.warn('[Moov Money] Simulation mode:', (err as Error).message);
       payment.status = 'EN_COURS';
       await payment.save();
     }
@@ -164,6 +164,73 @@ export class PaymentsService {
       .find({ client: userId })
       .sort({ createdAt: -1 })
       .exec();
+  }
+
+  // ─── Admin ────────────────────────────────────────────────────
+  async findAll(page = 1, limit = 20, status?: string, method?: string) {
+    const query: Record<string, string> = {};
+    if (status) query.status = status;
+    if (method) query.method = method;
+    const skip = (page - 1) * limit;
+    const total = await this.paymentModel.countDocuments(query);
+    const data = await this.paymentModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('client', 'firstName lastName phone')
+      .populate('order', 'orderNumber')
+      .exec();
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  async getAdminStats() {
+    const [byStatus, byMethod, confirmedTotal] = await Promise.all([
+      this.paymentModel.aggregate([
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]),
+      this.paymentModel.aggregate([
+        { $match: { status: 'CONFIRME' } },
+        { $group: { _id: '$method', total: { $sum: '$amount' } } },
+      ]),
+      this.paymentModel
+        .aggregate([
+          { $match: { status: 'CONFIRME' } },
+          { $group: { _id: null, total: { $sum: '$amount' } } },
+        ])
+        .then((r) => r[0]?.total ?? 0),
+    ]);
+
+    const mtnTotal =
+      byMethod.find((m) => m._id === 'MTN_MOMO')?.total ?? 0;
+    const moovTotal =
+      byMethod.find((m) => m._id === 'MOOV_MONEY')?.total ?? 0;
+    const methodSum = mtnTotal + moovTotal || 1;
+    const pending =
+      byStatus.find((s) => ['EN_ATTENTE', 'EN_COURS'].includes(s._id))
+        ?.count ?? 0;
+
+    return {
+      collected: confirmedTotal,
+      mtnShare: Math.round((mtnTotal / methodSum) * 100),
+      moovShare: Math.round((moovTotal / methodSum) * 100),
+      pending,
+    };
+  }
+
+  async confirmManual(id: string) {
+    const payment = await this.paymentModel.findById(id);
+    if (!payment) throw new NotFoundException('Paiement introuvable');
+    payment.status = 'CONFIRME';
+    payment.paidAt = new Date();
+    return payment.save();
+  }
+
+  async refund(id: string) {
+    const payment = await this.paymentModel.findById(id);
+    if (!payment) throw new NotFoundException('Paiement introuvable');
+    payment.status = 'REMBOURSE';
+    return payment.save();
   }
 
   // ─── MTN Token helper ─────────────────────────────────────────

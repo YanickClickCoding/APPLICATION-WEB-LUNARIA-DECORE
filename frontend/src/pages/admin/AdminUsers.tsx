@@ -32,7 +32,7 @@ function AddClientForm({ onClose }: { onClose: () => void }) {
 
   return (
     <div onClick={(e) => e.target === e.currentTarget && onClose()}
-      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(26,26,46,.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(43,20,36,.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div className="card" style={{ width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--sh-lg)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--line-2)' }}>
           <h2 className="serif" style={{ fontSize: 24, fontWeight: 600 }}>Ajouter un client</h2>

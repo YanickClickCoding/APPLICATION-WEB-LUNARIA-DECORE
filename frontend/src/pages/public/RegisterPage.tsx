@@ -38,7 +38,7 @@ export default function RegisterPage() {
     <div style={{ minHeight: '100vh', display: 'flex' }} className="lun-auth">
       <div className="lun-auth-visual" style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'var(--night)' }}>
         <img src={HERO.wedding} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: .55 }} />
-        <div style={{ position: 'absolute', inset: 0, padding: 56, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: 'linear-gradient(to top, rgba(26,26,46,.7), transparent)' }}>
+        <div style={{ position: 'absolute', inset: 0, padding: 56, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: 'linear-gradient(to top, rgba(43,20,36,.7), transparent)' }}>
           <Logo color="#fff" mark="var(--gold)" />
           <div>
             <h2 className="display" style={{ fontSize: 44, color: '#fff', lineHeight: 1.05 }}>Créons ensemble<br />vos plus beaux moments.</h2>

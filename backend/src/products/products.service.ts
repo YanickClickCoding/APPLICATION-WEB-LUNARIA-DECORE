@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types, isValidObjectId } from 'mongoose';
 import { Product, ProductDocument } from '../common/schemas/product.schema';
 
 interface ProductFilter {
@@ -32,7 +32,12 @@ export class ProductsService {
       isAvailable: true,
     };
 
-    if (category) query.category = category;
+    if (category) {
+      // Accepte un ObjectId (id de catégorie) ou un slug de catégorie.
+      query.category = isValidObjectId(category)
+        ? new Types.ObjectId(category)
+        : category;
+    }
     if (search) query.$text = { $search: search };
     if (minPrice || maxPrice) {
       query.price = {

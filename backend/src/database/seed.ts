@@ -168,14 +168,191 @@ const CATEGORIES_DATA = [
   },
 ];
 
-const slug = (name: string, id: string) =>
+// Slug stable et lisible : nettoyage du nom + suffixe déterministe (index).
+// Pas de timestamp → les URLs survivent aux re-seeds et restent partageables.
+const slug = (name: string, suffix: string) =>
   name
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-') +
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') +
   '-' +
-  id.slice(-4);
+  suffix;
+
+// ─── Générateur de produits (10 par catégorie) ──────────────────────────
+type CatMap = Record<string, mongoose.Types.ObjectId>;
+interface ProductSeed {
+  name: string;
+  shortDescription: string;
+  description: string;
+  price: number;
+  comparePrice?: number;
+  images: string[];
+  category: mongoose.Types.ObjectId;
+  tags: string[];
+  stock: number;
+  isFeatured: boolean;
+  ratings: { average: number; count: number };
+}
+
+// Pool d'images vérifiées (HTTP 200) — voir frontend/src/utils/images.ts.
+const IMG = {
+  bougies: ['1602874801007-bd458bb1b8b6', '1602028915047-37269d1a73f7', '1543946207-39bd91e70ca7'],
+  guirlandes: ['1482555670981-4de159d8553b', '1545127398-14699f92334b', '1508873699372-7aeab60b44ab', '1492684223066-81342ee5ff30'],
+  roses: ['1462275646964-a0e3386b89fa', '1487070183336-b863922373d4', '1464349095431-e9a21285b5f3'],
+  coeur: ['1513151233558-d860c5398176', '1530103862676-de8c9debad1d'],
+  mariage: ['1518621736915-f3b1c41bfd00', '1523438885200-e635ba2c371e', '1464366400600-7168b8af9bc3', '1469504512102-900f29606341'],
+  table: ['1464366400600-7168b8af9bc3', '1485955900006-10f4d324d411', '1540574163026-643ea20ade25'],
+  fete: ['1516802273409-68526ee1bdd6', '1527529482837-4698179dc6ce', '1519741497674-611481863552'],
+  pere: ['1569529465841-dfecdab7503b', '1511381939415-e44015466834', '1510812431401-41d2bd2722f3'],
+  bapteme: ['1522673607200-164d1b6ce486', '1584100936595-c0654b55a2e2'],
+  chambre: ['1540518614846-7eded433c457', '1631049307264-da0ec9d70304', '1540574163026-643ea20ade25'],
+  divers: ['1618160702438-9b02ab6515c9', '1540574163026-643ea20ade25', '1535254973040-607b474cb50d'],
+};
+const img = (ids: string[], i: number) => U(ids[i % ids.length], 600, 600);
+const img2 = (a: string[], b: string[], i: number) => [img(a, i), img(b, i + 1)];
+
+// Modèle de catalogue : pour chaque catégorie, 10 produits.
+// [nom, accroche, description, prix, comparePrice|0, [pool images], tags…]
+type Row = [string, string, string, number, number, string[], string[]];
+
+function rows(catSlug: string): Row[] {
+  switch (catSlug) {
+    case 'mariage':
+      return [
+        ['Arche Fleurie Blanche (location)', 'Arche décorée de fleurs fraîches pour cérémonie', "Magnifiez votre cérémonie avec cette arche entièrement décorée de fleurs blanches et de verdure. Location à la journée, installation et reprise incluses.", 45000, 0, IMG.mariage, ['arche', 'fleurs', 'cérémonie']],
+        ['Centre de Table Floral Mariage', 'Composition florale pour table de réception', "Élégant centre de table avec roses blanches, eucalyptus et boutons d'or. Composition fraîche préparée le jour J. Prix à la pièce.", 15000, 20000, IMG.table, ['centre de table', 'floral', 'roses']],
+        ['Photophore en Verre Doré (lot de 6)', 'Porte-bougies en verre soufflé, finition or', 'Ces 6 photophores en verre soufflé à finition dorée apportent une touche luxueuse à votre table de mariage. Compatibles bougies chauffe-plat et LED.', 12000, 16000, IMG.bougies, ['photophore', 'verre', 'doré']],
+        ['Chemin de Table Satin Blanc 5m', 'Voile de satin pour sublimer la table d\'honneur', 'Chemin de table en satin blanc nacré de 5 mètres, finition surfilée. Drape élégamment la table des mariés ou le buffet.', 6500, 0, IMG.table, ['chemin de table', 'satin', 'blanc']],
+        ['Coupe à Champagne Gravée (x2)', 'Coupes dorées avec gravure florale, pour les mariés', 'Paire de coupes à champagne en verre soufflé à finition dorée avec décoration florale gravée. Parfaites pour le toast des mariés.', 12000, 0, IMG.pere, ['coupe', 'champagne', 'dorée']],
+        ['Housses de Chaise Lycra (lot de 10)', 'Housses extensibles blanches avec nœud satin', 'Lot de 10 housses de chaise en lycra blanc avec nœuds en satin. Transforment instantanément une salle de réception. Lavables et réutilisables.', 18000, 24000, IMG.mariage, ['housse', 'chaise', 'réception']],
+        ['Panneau Bienvenue Personnalisé', 'Pancarte calligraphiée au nom des mariés', 'Panneau de bienvenue en bois avec calligraphie personnalisée aux prénoms des mariés et date. Sur chevalet doré. Livré en 72h.', 14000, 0, IMG.mariage, ['panneau', 'bienvenue', 'personnalisé']],
+        ['Guirlande Florale Suspendue 3m', 'Cascade de fleurs artificielles haut de gamme', 'Guirlande florale suspendue de 3 mètres en fleurs artificielles premium (roses, pivoines, eucalyptus). Idéale pour arche, plafond ou table d\'honneur.', 22000, 0, IMG.guirlandes, ['guirlande', 'florale', 'suspendue']],
+        ['Tapis de Cérémonie Blanc 10m', 'Allée nuptiale en moquette événementielle', 'Tapis d\'allée blanc de 10 mètres pour l\'entrée de la mariée. Moquette événementielle antidérapante, pose incluse en zone Cotonou.', 28000, 35000, IMG.mariage, ['tapis', 'allée', 'cérémonie']],
+        ['Lanternes Décoratives Dorées (lot de 4)', 'Lanternes métal et verre pour allée ou tables', 'Lot de 4 lanternes en métal doré et verre, hauteurs assorties. Accueillent une bougie LED pour baliser l\'allée ou décorer les tables.', 16000, 0, IMG.guirlandes, ['lanterne', 'dorée', 'allée']],
+      ];
+    case 'saint-valentin':
+      return [
+        ['Pétales de Roses Rouges (500g)', 'Vraies pétales de roses séchées, rouge intense', 'Créez un chemin de roses ou décorez votre lit avec ces véritables pétales de roses rouges. 500g de pétales séchés premium pour une décoration inoubliable.', 4000, 5500, IMG.roses, ['roses', 'pétales', 'romantique']],
+        ['Ballon Cœur Géant Rouge 90cm', 'Ballon en forme de cœur XXL, qualité premium', "Un cœur géant pour une déclaration d'amour spectaculaire ! Ballon en latex de 90cm, parfait pour la Saint-Valentin et les demandes en mariage.", 3000, 0, IMG.coeur, ['ballon', 'coeur', 'déclaration']],
+        ['Cœur Lumineux LED 40cm', 'Décoration murale cœur en néon LED, câble USB', 'Un cœur lumineux LED de 40cm pour sublimer votre chambre ou table de cérémonie. Lumière chaude, alimentation USB, parfait pour les photos.', 8500, 0, IMG.coeur, ['coeur', 'led', 'neon']],
+        ['Kit Bougies LED Rouges (10 pièces)', 'Bougies à flamme vacillante, sans danger', 'Kit de 10 bougies LED à flamme vacillante ultra-réaliste, alimentation par piles. Créez une atmosphère romantique sans risque d\'incendie.', 3500, 5000, IMG.bougies, ['bougies', 'led', 'rouge']],
+        ['Lettres Lumineuses "LOVE"', 'Mot LOVE en lettres LED pour fond photo', 'Lettres lumineuses "LOVE" de 20cm en LED blanc chaud. Parfaites en fond de table ou pour vos photos de Saint-Valentin. Piles incluses.', 11000, 0, IMG.guirlandes, ['love', 'led', 'lettres']],
+        ['Bouquet Éternel Roses Rouges', 'Roses stabilisées sous cloche en verre', 'Roses rouges stabilisées (vraies fleurs durables 2-3 ans) sous cloche de verre. Le cadeau romantique qui ne fane jamais.', 16000, 21000, IMG.roses, ['roses', 'éternelles', 'cloche']],
+        ['Guirlande Cœurs Lumineuse 3m', 'Guirlande LED à mini-cœurs roses', 'Guirlande de 3 mètres à 30 mini-cœurs lumineux roses. Lumière douce, à piles. Idéale pour encadrer un lit ou une fenêtre.', 4500, 0, IMG.guirlandes, ['guirlande', 'coeurs', 'led']],
+        ['Boîte Surprise "Je t\'aime"', 'Coffret cadeau avec pétales et message', 'Coffret cadeau garni de pétales de roses, d\'une carte message et d\'un emplacement pour bijou ou chocolats. Effet waouh garanti à l\'ouverture.', 7500, 9500, IMG.divers, ['coffret', 'surprise', 'cadeau']],
+        ['Set Photo "Saint-Valentin"', 'Accessoires photobooth thème amour', 'Set de 12 accessoires photobooth sur le thème de l\'amour : cœurs, moustaches, pancartes "I love you". Pour des photos drôles et tendres.', 5000, 0, IMG.fete, ['photobooth', 'accessoires', 'amour']],
+        ['Chemin de Bougies (set de 20)', 'Bougies LED dorées pour tracer un chemin', 'Set de 20 bougies LED dorées pour créer un chemin lumineux romantique jusqu\'à votre surprise. Effet cinéma garanti.', 9000, 12000, IMG.bougies, ['bougies', 'chemin', 'romantique']],
+      ];
+    case 'anniversaire':
+      return [
+        ['Kit Décoration Anniversaire Doré', 'Ballons, banderole, confettis — tout pour la fête', 'Kit complet : 20 ballons dorés et noirs, banderole "Joyeux Anniversaire", confettis étoiles et 2 ballons chiffres. Tout pour une fête mémorable.', 9500, 13000, IMG.fete, ['anniversaire', 'ballons', 'kit']],
+        ['Arche de Ballons Organique', 'Guirlande de ballons aux couleurs au choix', 'Arche de ballons façon "organique" de 2m, dégradé de couleurs au choix. Montage sur structure, prête à poser à l\'entrée ou en fond de table.', 17000, 0, IMG.fete, ['arche', 'ballons', 'organique']],
+        ['Bannière "Happy Birthday" Personnalisée', 'Bannière tissu avec prénom du fêté', 'Bannière en tissu de haute qualité, personnalisable avec le prénom. Dimensions 2m × 30cm, réutilisable, livrée en 48h.', 7000, 0, IMG.fete, ['bannière', 'personnalisé']],
+        ['Ballons Chiffres Lumineux LED', 'Chiffres géants 80cm avec LED intégrées', 'Paire de ballons chiffres géants de 80cm avec LED intégrées. Composez n\'importe quel âge. Gonflage à l\'hélium possible en boutique.', 8000, 0, IMG.guirlandes, ['chiffres', 'led', 'géant']],
+        ['Backdrop Photo à Sequins', 'Rideau pailleté pour fond de photos', 'Rideau de fond pailleté (sequins) de 2m × 1m, or ou rose. Crée un fond photo scintillant pour immortaliser la fête.', 13000, 16000, IMG.guirlandes, ['backdrop', 'sequins', 'photo']],
+        ['Confettis & Canons à Paillettes (x6)', 'Canons à confettis pour le moment clé', 'Lot de 6 canons à confettis et paillettes biodégradables. Pour un final spectaculaire au moment du gâteau ou des 12 coups de minuit.', 4500, 0, IMG.fete, ['confettis', 'canons', 'paillettes']],
+        ['Centre de Table Festif (x5)', 'Compositions ballons et fleurs pour tables', 'Lot de 5 centres de table festifs combinant mini-ballons, fleurs et bougie LED. Habillent élégamment les tables des invités.', 14000, 18000, IMG.table, ['centre de table', 'festif']],
+        ['Guirlande Fanions Multicolore 10m', 'Guirlande tissu réutilisable pour salle', 'Guirlande de fanions en tissu de 10 mètres, multicolore. Réutilisable, habille les murs et plafonds en un clin d\'œil.', 5500, 0, IMG.guirlandes, ['fanions', 'guirlande', 'salle']],
+        ['Set Vaisselle Jetable Premium', 'Assiettes, gobelets, serviettes assortis (x24)', 'Set complet pour 24 personnes : assiettes, gobelets et serviettes assortis aux couleurs de la fête. Carton épais qualité premium.', 9000, 11000, IMG.table, ['vaisselle', 'jetable', 'premium']],
+        ['Photobooth Complet à Cadre', 'Cadre géant + accessoires pour photos', 'Cadre photobooth géant doré + 15 accessoires rigolos. Animez la fête et repartez avec des souvenirs photo inoubliables.', 12000, 0, IMG.fete, ['photobooth', 'cadre', 'animation']],
+      ];
+    case 'fete-des-meres':
+      return [
+        ['Bouquet de 30 Roses Roses', 'Roses fraîches premium, emballage élégant', 'Magnifique bouquet de 30 roses fraîches rose tendre. Emballage cadeau avec ruban satin et carte message personnalisée. Disponible le jour J.', 18000, 22000, IMG.roses, ['roses', 'bouquet', 'fleurs']],
+        ['Coffret "Merci Maman"', 'Bougie, fleurs séchées et carte douceur', 'Coffret cadeau garni d\'une bougie parfumée, d\'un bouquet de fleurs séchées et d\'une carte personnalisée. Une attention pleine de tendresse.', 14000, 17000, IMG.divers, ['coffret', 'maman', 'cadeau']],
+        ['Bougie Parfumée Rose & Pivoine', 'Cire végétale, fragrance florale délicate', 'Bougie artisanale en cire de soja naturelle, parfum rose et pivoine. 45h de combustion, pot en verre réutilisable. Le cadeau cocooning idéal.', 6500, 8000, IMG.bougies, ['bougie', 'parfumée', 'rose']],
+        ['Composition Florale en Boîte', 'Roses fraîches arrangées en flowerbox', 'Roses fraîches arrangées dans une élégante boîte ronde (flowerbox). Tient sans entretien plusieurs jours. Couleur au choix.', 20000, 0, IMG.roses, ['flowerbox', 'roses', 'composition']],
+        ['Bouquet de Fleurs Séchées', 'Composition durable tons pastel', 'Bouquet de fleurs séchées aux tons pastel (lagurus, eucalyptus, statice). Décoratif et durable, ne fane pas. Emballage kraft soigné.', 12000, 15000, IMG.roses, ['fleurs séchées', 'durable', 'pastel']],
+        ['Vase Décoratif en Céramique', 'Vase artisanal pour sublimer un bouquet', 'Vase en céramique artisanale, finition mate, pour mettre en valeur un bouquet. Pièce décorative qui se garde bien après la fête.', 9500, 0, IMG.divers, ['vase', 'céramique', 'déco']],
+        ['Carte Géante Personnalisée', 'Grande carte à message avec photos', 'Carte géante (A3) personnalisable avec photos et message pour maman. Imprimée sur papier épais, livrée avec enveloppe assortie.', 4500, 0, IMG.fete, ['carte', 'personnalisé', 'message']],
+        ['Couronne de Fleurs Murale', 'Couronne florale à suspendre', 'Couronne de fleurs artificielles premium à suspendre. Décoration murale élégante et durable pour la chambre ou le salon de maman.', 13000, 16000, IMG.roses, ['couronne', 'florale', 'murale']],
+        ['Set Spa "Détente Maman"', 'Bougie, sels et accessoires bien-être', 'Set bien-être : bougie parfumée, sels de bain, et accessoires détente présentés dans un panier garni. Offrez un moment de pure détente.', 17000, 21000, IMG.divers, ['spa', 'détente', 'bien-être']],
+        ['Guirlande Photos Lumineuse', 'Guirlande LED avec pinces à photos', 'Guirlande LED de 3m avec 20 mini-pinces pour accrocher vos plus belles photos de famille. Un cadeau souvenir lumineux et émouvant.', 5500, 0, IMG.guirlandes, ['guirlande', 'photos', 'led']],
+      ];
+    case 'fete-des-peres':
+      return [
+        ['Coffret Whisky & Verres', 'Set de 2 verres à whisky avec pierres', 'Coffret cadeau avec 2 verres à whisky en cristal et pierres à whisky réutilisables. Présenté dans une boîte bois élégante.', 19000, 24000, IMG.pere, ['whisky', 'verres', 'coffret']],
+        ['Box "Super Papa" Personnalisée', 'Coffret garni personnalisable', 'Coffret cadeau personnalisable "Super Papa" : mug, carte, et emplacements pour vos petites attentions. Le cadeau qui touche en plein cœur.', 13000, 16000, IMG.pere, ['papa', 'coffret', 'personnalisé']],
+        ['Mug Personnalisé Photo', 'Tasse céramique avec photo et message', 'Mug en céramique personnalisé avec votre photo et un message. Passe au lave-vaisselle. Un cadeau du quotidien plein de sens.', 5000, 0, IMG.divers, ['mug', 'photo', 'personnalisé']],
+        ['Cadre Photo Décoratif', 'Cadre élégant pour souvenir de famille', 'Cadre photo en bois et verre, finition soignée, pour immortaliser un souvenir de famille. Plusieurs formats disponibles.', 7500, 0, IMG.divers, ['cadre', 'photo', 'déco']],
+        ['Bannière "Joyeuse Fête Papa"', 'Bannière tissu réutilisable', 'Bannière en tissu "Joyeuse Fête Papa" de 2m, réutilisable. Décorez la maison pour surprendre papa dès le réveil.', 6000, 0, IMG.fete, ['bannière', 'papa', 'fête']],
+        ['Set Apéro Détente', 'Plateau, verres et accessoires apéritif', 'Set apéro complet : plateau en bois, 4 verres et accessoires. Pour partager un moment convivial avec papa. Présenté en panier garni.', 16000, 20000, IMG.pere, ['apéro', 'détente', 'set']],
+        ['Bougie Parfumée Bois & Cuir', 'Fragrance masculine, cire naturelle', 'Bougie artisanale en cire de soja, fragrance bois de santal et cuir. Une senteur masculine élégante. 45h de combustion.', 6500, 8000, IMG.bougies, ['bougie', 'bois', 'cuir']],
+        ['Coffret Soin Barbe', 'Huile, baume et peigne en bois', 'Coffret de soin pour la barbe : huile nourrissante, baume coiffant et peigne en bois. Pour un papa toujours tiré à quatre épingles.', 14000, 17000, IMG.divers, ['barbe', 'soin', 'coffret']],
+        ['Décoration de Table "Papa"', 'Set complet pour un repas en son honneur', 'Set de décoration de table pour un repas en l\'honneur de papa : chemin de table, marque-places, centre de table et bougies.', 11000, 0, IMG.table, ['table', 'décoration', 'repas']],
+        ['Guirlande Photos Souvenirs', 'Guirlande LED avec pinces photos', 'Guirlande LED de 3m avec pinces pour accrocher vos souvenirs père-enfant. Un cadeau lumineux qui raconte votre histoire.', 5500, 0, IMG.guirlandes, ['guirlande', 'photos', 'souvenirs']],
+      ];
+    case 'bapteme':
+      return [
+        ['Kit Décoration Baptême Pastel', 'Ballons, organza et guirlandes pastel', "Kit complet pour un baptême, en bleu (garçon) ou rose (fille) : ballons, guirlandes, organza, chemin de table et porte-bougies.", 15000, 0, IMG.bapteme, ['baptême', 'kit', 'pastel']],
+        ['Arche de Ballons Bébé', 'Arche pastel pour l\'entrée ou le buffet', 'Arche de ballons de 2m en dégradé pastel, façon nuage. Accueille les invités ou habille la table du buffet. Montage inclus.', 16000, 20000, IMG.bapteme, ['arche', 'ballons', 'bébé']],
+        ['Bannière "Bienvenue Bébé"', 'Bannière tissu personnalisable au prénom', 'Bannière en tissu "Bienvenue" personnalisable au prénom de bébé. Tons doux, réutilisable, livrée en 72h.', 7000, 0, IMG.bapteme, ['bannière', 'bébé', 'personnalisé']],
+        ['Centre de Table Nuage (x4)', 'Compositions douces ballons et fleurs', 'Lot de 4 centres de table sur le thème du nuage : mini-ballons, fleurs pastel et bougie LED. Habillent délicatement les tables.', 13000, 16000, IMG.table, ['centre de table', 'nuage', 'pastel']],
+        ['Guirlande Étoiles Lumineuse', 'Guirlande LED en forme d\'étoiles', 'Guirlande de 3m à 20 étoiles lumineuses LED, lumière douce. Crée une ambiance féerique au-dessus du berceau décoratif ou de la table.', 5500, 0, IMG.guirlandes, ['guirlande', 'étoiles', 'led']],
+        ['Ballons Hélium Chiffre "1"', 'Ballon géant pour le premier anniversaire', 'Ballon chiffre géant de 80cm pour célébrer le premier anniversaire ou le baptême. Gonflage hélium possible en boutique.', 6000, 0, IMG.guirlandes, ['ballon', 'chiffre', 'hélium']],
+        ['Photobooth "Baby Shower"', 'Cadre et accessoires sur le thème bébé', 'Cadre photobooth + 12 accessoires sur le thème bébé. Pour des photos attendrissantes avec les invités du baptême.', 11000, 14000, IMG.fete, ['photobooth', 'baby shower', 'bébé']],
+        ['Drapé Organza & Tulle', 'Voilage pastel pour habiller mur ou table', 'Drapé en organza et tulle pastel de 5m pour habiller un mur, une table d\'honneur ou un coin photo. Effet doux et aérien.', 8500, 0, IMG.bapteme, ['organza', 'tulle', 'drapé']],
+        ['Bougies LED Pastel (x10)', 'Bougies douces sans danger pour bébé', 'Lot de 10 bougies LED aux teintes pastel, à flamme vacillante et sans danger. Parfaites autour des plus petits.', 4000, 5000, IMG.bougies, ['bougies', 'led', 'pastel']],
+        ['Marque-Places Personnalisés (x20)', 'Étiquettes prénoms pour les invités', 'Lot de 20 marque-places personnalisés aux prénoms des invités, design pastel assorti au baptême. Touche raffinée pour les tables.', 6000, 0, IMG.bapteme, ['marque-places', 'personnalisé', 'invités']],
+      ];
+    case 'fiancailles':
+      return [
+        ['Coffret "Oui Je le veux"', 'Bougies, pétales et photophores réunis', 'Coffret pour la demande parfaite : 6 bougies parfumées, 200g de pétales rouges, 4 photophores dorés, guirlande 3m et tapis moelleux.', 35000, 42000, IMG.roses, ['demande', 'romantique', 'coffret']],
+        ['Lettres Lumineuses "MARRY ME"', 'Mot lumineux pour la grande question', 'Lettres lumineuses "MARRY ME" en LED blanc chaud. Le décor incontournable pour poser LA question de façon spectaculaire.', 18000, 0, IMG.guirlandes, ['marry me', 'led', 'demande']],
+        ['Chemin de Bougies & Pétales', 'Set pour tracer un chemin romantique', 'Set complet pour tracer un chemin romantique : 30 bougies LED et 300g de pétales de roses rouges. Effet cinéma garanti.', 14000, 18000, IMG.bougies, ['chemin', 'bougies', 'pétales']],
+        ['Cœur Géant de Ballons', 'Structure cœur en ballons rouges et roses', 'Structure en forme de cœur (1,5m) garnie de ballons rouges et roses. Fond romantique idéal pour la demande et les photos.', 16000, 0, IMG.coeur, ['coeur', 'ballons', 'structure']],
+        ['Bouquet de Roses Rouges (50)', 'Imposant bouquet pour une grande demande', 'Imposant bouquet de 50 roses rouges fraîches, emballage luxe avec ruban satin. Pour une demande qui marque les esprits.', 32000, 38000, IMG.roses, ['roses', 'bouquet', 'luxe']],
+        ['Bague Décorative Géante LED', 'Bague lumineuse pour la mise en scène', 'Bague décorative géante lumineuse (40cm) en LED. Élément de décor original pour symboliser votre engagement sur les photos.', 12000, 0, IMG.guirlandes, ['bague', 'led', 'décor']],
+        ['Champagne & Coupes Gravées', 'Set de 2 coupes dorées pour trinquer', 'Set de 2 coupes à champagne dorées et gravées pour célébrer le "oui". Présentées dans un écrin. Champagne non inclus.', 13000, 16000, IMG.pere, ['champagne', 'coupes', 'trinquer']],
+        ['Rideau Lumineux Étoilé 3m', 'Rideau de LED pour un fond féerique', 'Rideau lumineux de 3m × 2m à 300 LED, façon ciel étoilé. Crée un fond magique pour la demande et les photos souvenirs.', 11000, 0, IMG.guirlandes, ['rideau', 'led', 'étoilé']],
+        ['Coffret Roses Éternelles', 'Roses stabilisées en écrin de luxe', 'Roses rouges stabilisées (durables 2-3 ans) présentées dans un écrin de luxe en forme de cœur. Le symbole d\'un amour qui dure.', 24000, 29000, IMG.roses, ['roses', 'éternelles', 'écrin']],
+        ['Mise en Scène Photo Souvenir', 'Décor complet + accessoires photos', 'Décor de mise en scène complet pour vos photos de fiançailles : panneau personnalisé, guirlandes et accessoires assortis.', 20000, 0, IMG.fete, ['photo', 'mise en scène', 'souvenir']],
+      ];
+    case 'romantique':
+    default:
+      return [
+        ['Kit Bougies LED Romantiques (10)', 'Bougies à flamme vacillante, sans danger', 'Kit de 10 bougies LED à flamme vacillante ultra-réaliste, à piles. Créez une atmosphère envoûtante sans risque d\'incendie.', 3500, 5000, IMG.bougies, ['bougies', 'led', 'romantique']],
+        ['Guirlande Lumineuse Dorée 10m', 'Fil de cuivre, 100 micro-ampoules chaudes', "Guirlande de 10m en fil de cuivre, 100 micro-ampoules à lumière chaude. Ambiance féerique pour chambre, fenêtre ou tête de lit.", 5500, 0, IMG.guirlandes, ['guirlande', 'led', 'dorée']],
+        ['Bougie Parfumée Rose & Oud (250g)', 'Cire végétale, fragrance rose et bois de oud', 'Bougie artisanale en cire de soja, parfum rose et bois de oud. 45h de combustion, mèche coton, pot en verre réutilisable.', 6500, 8000, IMG.bougies, ['bougie', 'parfumée', 'oud']],
+        ['Rideau de Guirlandes LED 3m', 'Rideau lumineux pour tête de lit ou mur', 'Rideau de guirlandes LED de 3m × 2m, 300 ampoules à lumière chaude. Transforme une tête de lit ou un mur en ciel étoilé.', 9000, 12000, IMG.guirlandes, ['rideau', 'guirlandes', 'led']],
+        ['Pétales de Roses (mix rouge & rose)', 'Pétales séchés pour lit et chemin romantique', 'Sachet de pétales de roses séchées (mix rouge et rose). Pour décorer un lit, tracer un chemin ou parsemer une table romantique.', 4000, 0, IMG.roses, ['pétales', 'roses', 'romantique']],
+        ['Coussins Velours Cœur (x2)', 'Paire de coussins doux pour la chambre', 'Paire de coussins en velours, doux au toucher, pour habiller le lit ou le canapé d\'une touche cosy et romantique.', 11000, 14000, IMG.divers, ['coussin', 'velours', 'cosy']],
+        ['Diffuseur de Parfum d\'Ambiance', 'Senteur florale apaisante pour la chambre', 'Diffuseur à bâtonnets, senteur florale apaisante. Parfume durablement la chambre pour une ambiance enveloppante et romantique.', 7000, 0, IMG.divers, ['diffuseur', 'parfum', 'ambiance']],
+        ['Plaid Cocooning Doux', 'Couverture moelleuse pour soirées câlines', 'Plaid moelleux ultra-doux, idéal pour des soirées câlines. Habille joliment le lit ou le canapé. Lavable en machine.', 12000, 15000, IMG.divers, ['plaid', 'cocooning', 'doux']],
+        ['Photophores en Verre (lot de 4)', 'Porte-bougies pour une lumière tamisée', 'Lot de 4 photophores en verre pour une lumière tamisée et romantique. Compatibles bougies chauffe-plat et LED.', 8000, 10000, IMG.bougies, ['photophore', 'verre', 'tamisé']],
+        ['Set "Soirée Romantique"', 'Bougies, pétales et guirlande réunis', 'Set tout-en-un pour une soirée à deux : bougies LED, pétales de roses et guirlande lumineuse. Tout pour une ambiance romantique réussie.', 13000, 17000, IMG.chambre, ['set', 'soirée', 'romantique']],
+      ];
+  }
+}
+
+const FEATURED_PER_CAT = 3; // les 3 premiers de chaque catégorie sont "vedette"
+
+function buildProducts(catMap: CatMap): ProductSeed[] {
+  const all: ProductSeed[] = [];
+  for (const catSlug of Object.keys(catMap)) {
+    rows(catSlug).forEach(([name, short, desc, price, cmp, pool, tags], i) => {
+      all.push({
+        name,
+        shortDescription: short,
+        description: desc,
+        price,
+        comparePrice: cmp || undefined,
+        images: img2(pool, pool, i),
+        category: catMap[catSlug],
+        tags: [...tags, catSlug],
+        stock: 8 + ((i * 7) % 45),
+        isFeatured: i < FEATURED_PER_CAT,
+        ratings: {
+          average: Math.round((4.5 + ((i * 3) % 5) / 10) * 10) / 10,
+          count: 6 + ((i * 11) % 40),
+        },
+      });
+    });
+  }
+  return all;
+}
 
 async function seed() {
   await mongoose.connect(
@@ -200,250 +377,13 @@ async function seed() {
   );
   console.log(`📂 ${cats.length} catégories créées`);
 
-  // Produits
-  const now = Date.now();
-  const products = [
-    // Romantique
-    {
-      name: 'Kit Bougies LED Romantiques (10 pièces)',
-      shortDescription:
-        'Bougies à flamme vacillante, effet bougie réelle sans danger',
-      description:
-        "Créez une atmosphère romantique envoûtante avec ce kit de 10 bougies LED. Flamme vacillante ultra-réaliste, alimentation par piles, parfaites pour une décoration sans risque d'incendie.",
-      price: 3500,
-      comparePrice: 5000,
-      images: [
-        U('1519657338903-65af98c59b8b', 600, 600),
-        U('1602028915047-37269d1a73f7', 600, 600),
-      ],
-      category: catMap['romantique'],
-      tags: ['bougies', 'led', 'romantique', 'mariage'],
-      stock: 50,
-      isFeatured: true,
-      ratings: { average: 4.8, count: 32 },
-    },
-    {
-      name: 'Guirlande Lumineuse Dorée 10m',
-      shortDescription: 'Guirlande led cuivre, 100 micro-ampoules chaleureuses',
-      description:
-        "Transformez n'importe quel espace avec cette guirlande lumineuse de 10 mètres en fil de cuivre. 100 micro-ampoules à lumière chaude créent une ambiance féerique. Idéale pour les mariages, chambres romantiques et fêtes.",
-      price: 5500,
-      images: [
-        U('1482555670981-4de159d8553b', 600, 600),
-        U('1545127398-14699f92334b', 600, 600),
-      ],
-      category: catMap['romantique'],
-      tags: ['guirlande', 'led', 'dorée', 'féerique'],
-      stock: 35,
-      isFeatured: true,
-      ratings: { average: 4.9, count: 47 },
-    },
-    {
-      name: 'Pétales de Roses Rouges (500g)',
-      shortDescription:
-        'Vraies pétales de roses séchées, couleur rouge intense',
-      description:
-        'Créez un chemin de rose ou décorez votre lit avec ces véritables pétales de roses rouges. 500g de pétales séchés de qualité premium pour une décoration romantique inoubliable.',
-      price: 4000,
-      comparePrice: 5500,
-      images: [
-        U('1565538810643-b5bdb6cc1a5b', 600, 600),
-        U('1464349095431-e9a21285b5f3', 600, 600),
-      ],
-      category: catMap['saint-valentin'],
-      tags: ['roses', 'pétales', 'romantique', 'saint-valentin'],
-      stock: 80,
-      isFeatured: true,
-      ratings: { average: 4.7, count: 28 },
-    },
-    {
-      name: 'Ballon Cœur Géant Rouge 90cm',
-      shortDescription: 'Ballon en forme de cœur XXL, qualité premium',
-      description:
-        "Un cœur géant pour une déclaration d'amour spectaculaire ! Ce ballon en latex de 90cm est parfait pour les Saint-Valentin, demandes en mariage et anniversaires romantiques.",
-      price: 3000,
-      images: [U('1530103862676-de8c9debad1d', 600, 600)],
-      category: catMap['saint-valentin'],
-      tags: ['ballon', 'coeur', 'saint-valentin', 'déclaration'],
-      stock: 60,
-      isFeatured: false,
-      ratings: { average: 4.6, count: 15 },
-    },
-    {
-      name: 'Photophore en Verre Doré (lot de 6)',
-      shortDescription: 'Porte-bougies en verre soufflé, finition or',
-      description:
-        'Ces 6 photophores en verre soufflé à finition dorée apportent une touche luxueuse à votre table de mariage ou à votre décoration romantique. Compatible avec bougies chauffe-plat et LED.',
-      price: 12000,
-      comparePrice: 16000,
-      images: [
-        U('1519657338903-65af98c59b8b', 600, 600),
-        U('1414235077428-338140e4d29b', 600, 600),
-      ],
-      category: catMap['mariage'],
-      tags: ['photophore', 'verre', 'doré', 'mariage'],
-      stock: 20,
-      isFeatured: true,
-      ratings: { average: 4.9, count: 22 },
-    },
-    {
-      name: 'Coeur Lumineux LED 40cm',
-      shortDescription: 'Décoration murale coeur en néon LED, câble USB',
-      description:
-        'Un coeur lumineux en LED de 40cm pour sublimer votre chambre ou votre table de cérémonie. Lumière chaude, alimentation USB, parfait pour les photos et la décoration.',
-      price: 8500,
-      images: [U('1607346704353-a82cec7b6fce', 600, 600)],
-      category: catMap['saint-valentin'],
-      tags: ['coeur', 'led', 'neon', 'décoration'],
-      stock: 25,
-      isFeatured: true,
-      ratings: { average: 4.8, count: 19 },
-    },
-    // Mariage
-    {
-      name: 'Arche Fleurie Blanche (location)',
-      shortDescription: 'Arche décorée de fleurs fraîches, pour cérémonie',
-      description:
-        'Magnifiez votre cérémonie de mariage avec cette arche entièrement décorée de fleurs blanches et de verdure. Location pour la journée, installation et reprise incluses.',
-      price: 45000,
-      images: [
-        U('1523438885200-e635ba2c371e', 600, 600),
-        U('1518621736915-f3b1c41bfd00', 600, 600),
-      ],
-      category: catMap['mariage'],
-      tags: ['arche', 'fleurs', 'mariage', 'cérémonie'],
-      stock: 3,
-      isFeatured: true,
-      ratings: { average: 5.0, count: 8 },
-    },
-    {
-      name: 'Centre de Table Floral Mariage',
-      shortDescription: 'Composition florale pour table de réception',
-      description:
-        "Élégant centre de table avec roses blanches, eucalyptus et boutons d'or. Composition fraîche préparée le jour J. Prix à la pièce.",
-      price: 15000,
-      comparePrice: 20000,
-      images: [U('1414235077428-338140e4d29b', 600, 600)],
-      category: catMap['mariage'],
-      tags: ['centre de table', 'floral', 'mariage', 'roses'],
-      stock: 15,
-      isFeatured: false,
-      ratings: { average: 4.7, count: 12 },
-    },
-    // Anniversaire
-    {
-      name: 'Kit Décoration Anniversaire Dorée',
-      shortDescription: 'Ballons, banderoles, confettis — tout pour la fête !',
-      description:
-        'Kit complet pour une décoration d\'anniversaire mémorable : 20 ballons dorés et noirs, banderole "Joyeux Anniversaire", confettis étoiles, 2 ballons chiffres.',
-      price: 9500,
-      comparePrice: 13000,
-      images: [
-        U('1516802273409-68526ee1bdd6', 600, 600),
-        U('1527529482837-4698179dc6ce', 600, 600),
-      ],
-      category: catMap['anniversaire'],
-      tags: ['anniversaire', 'ballons', 'kit', 'doré'],
-      stock: 40,
-      isFeatured: true,
-      ratings: { average: 4.6, count: 34 },
-    },
-    {
-      name: 'Bannière Personnalisable',
-      shortDescription: 'Bannière tissu "Happy Birthday" personnalisable',
-      description:
-        'Bannière en tissu de haute qualité, personnalisable avec le prénom du fêté. Dimensions 2m × 30cm, livraison en 48h.',
-      price: 7000,
-      images: [U('1516802273409-68526ee1bdd6', 600, 600)],
-      category: catMap['anniversaire'],
-      tags: ['bannière', 'anniversaire', 'personnalisable'],
-      stock: 20,
-      isFeatured: false,
-      ratings: { average: 4.5, count: 11 },
-    },
-    // Fête des mères
-    {
-      name: 'Bouquet de 30 Roses Roses',
-      shortDescription: 'Roses fraîches de première qualité, emballage élégant',
-      description:
-        'Offrez un magnifique bouquet de 30 roses fraîches de couleur rose tendre. Emballage cadeau avec ruban satin, carte message personnalisée incluse. Disponible le jour J.',
-      price: 18000,
-      comparePrice: 22000,
-      images: [U('1490750967868-88df5691cc3c', 600, 600)],
-      category: catMap['fete-des-meres'],
-      tags: ['roses', 'bouquet', 'fête des mères', 'fleurs'],
-      stock: 12,
-      isFeatured: true,
-      ratings: { average: 4.9, count: 26 },
-    },
-    // Baptême
-    {
-      name: 'Kit Décoration Baptême Bleu/Rose',
-      shortDescription: 'Ballons, organza, guirlandes pastel pour baptême',
-      description:
-        "Kit complet pour la décoration d'un baptême. Disponible en bleu (garçon) ou rose (fille) : ballons, guirlandes, organza, chemin de table, porte-bougie.",
-      price: 15000,
-      images: [U('1519211726170-5b0aff3e9007', 600, 600)],
-      category: catMap['bapteme'],
-      tags: ['baptême', 'kit', 'pastel', 'bébé'],
-      stock: 18,
-      isFeatured: false,
-      ratings: { average: 4.7, count: 9 },
-    },
-    // Fiançailles
-    {
-      name: 'Coffret Romantique "Oui Je le veux"',
-      shortDescription: 'Bougies, pétales, photophores, champagne non inclus',
-      description:
-        'Créez la demande en mariage parfaite avec ce coffret : 6 bougies parfumées rose, 200g de pétales rouges, 4 photophores dorés, guirlande lumineuse 3m et tapis moelleux. Tout pour un moment magique.',
-      price: 35000,
-      comparePrice: 42000,
-      images: [
-        U('1464349095431-e9a21285b5f3', 600, 600),
-        U('1519657338903-65af98c59b8b', 600, 600),
-        U('1547592180-85f173990554', 600, 600),
-      ],
-      category: catMap['fiancailles'],
-      tags: ['demande', 'fiançailles', 'romantique', 'coffret'],
-      stock: 8,
-      isFeatured: true,
-      ratings: { average: 5.0, count: 14 },
-    },
-    // Bougies parfumées
-    {
-      name: 'Bougie Parfumée Rose & Oud (250g)',
-      shortDescription: 'Cire végétale, fragrance rose et bois de oud',
-      description:
-        'Bougie artisanale en cire de soja 100% naturelle, parfum rose et bois de oud. 45h de combustion, mèche en coton, pot en verre réutilisable.',
-      price: 6500,
-      comparePrice: 8000,
-      images: [U('1602028915047-37269d1a73f7', 600, 600)],
-      category: catMap['romantique'],
-      tags: ['bougie', 'parfumée', 'rose', 'oud', 'naturelle'],
-      stock: 30,
-      isFeatured: false,
-      ratings: { average: 4.8, count: 21 },
-    },
-    {
-      name: 'Coupe à Champagne Décorée (x2)',
-      shortDescription:
-        'Coupes dorées avec gravure rose, idéales pour les mariés',
-      description:
-        'Paire de coupes à champagne en verre soufflé à finition dorée avec décoration florale gravée. Parfaites pour le toast des mariés ou pour célébrer une demande en mariage.',
-      price: 12000,
-      images: [U('1510812431401-41d2bd2722f3', 600, 600)],
-      category: catMap['mariage'],
-      tags: ['coupe', 'champagne', 'mariage', 'dorée'],
-      stock: 15,
-      isFeatured: false,
-      ratings: { average: 4.7, count: 7 },
-    },
-  ];
+  // Produits — 10 par catégorie, générés depuis un catalogue thématique.
+  const products = buildProducts(catMap);
 
   const createdProducts = await Product.insertMany(
     products.map((p, i) => ({
       ...p,
-      slug: slug(p.name, String(i) + now),
+      slug: slug(p.name, String(i + 1)),
       isArchived: false,
       isAvailable: true,
     })),
@@ -662,7 +602,7 @@ async function seed() {
   const createdServices = await DecorationService.insertMany(
     services.map((s, i) => ({
       ...s,
-      slug: slug(s.name, String(i) + now + 1),
+      slug: slug(s.name, 's' + String(i + 1)),
       isAvailable: true,
       isArchived: false,
     })),

@@ -73,7 +73,7 @@ export default function HomePage() {
       {/* ═══ HERO sombre immersif ═══ */}
       <div ref={heroRef} style={{ position: 'relative', background: 'var(--night)', color: '#fff', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -120, right: -80, width: 520, height: 520, borderRadius: '50%', background: 'radial-gradient(circle, rgba(239,168,56,.20), transparent 62%)' }} />
-        <div style={{ position: 'absolute', bottom: -160, left: -120, width: 540, height: 540, borderRadius: '50%', background: 'radial-gradient(circle, rgba(233,69,96,.18), transparent 62%)' }} />
+        <div style={{ position: 'absolute', bottom: -160, left: -120, width: 540, height: 540, borderRadius: '50%', background: 'radial-gradient(circle, rgba(236,72,153,.18), transparent 62%)' }} />
 
         <div className="lun-hero-grid" style={{ position: 'relative', maxWidth: 1280, margin: '0 auto', padding: '140px 56px 90px', display: 'flex', gap: 40, alignItems: 'center' }}>
           <div style={{ flex: 1.05 }}>
@@ -135,7 +135,7 @@ export default function HomePage() {
               <Link key={label} to={`/catalogue?occasion=${occ}`}
                 style={{ height: 180, borderRadius: 'var(--r-lg)', cursor: 'pointer', position: 'relative', overflow: 'hidden', display: 'block' }}>
                 <img src={img} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', padding: 22, background: 'linear-gradient(to top, rgba(26,26,46,.72), transparent 60%)' }}>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', padding: 22, background: 'linear-gradient(to top, rgba(43,20,36,.72), transparent 60%)' }}>
                   <span className="serif" style={{ color: '#fff', fontSize: 26, fontWeight: 600 }}>{label}</span>
                 </div>
               </Link>

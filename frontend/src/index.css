@@ -6,23 +6,23 @@
 @import "tailwindcss";
 
 :root {
-  /* — Couleurs — */
-  --night:    #1a1a2e;
-  --night-2:  #23233c;
-  --night-3:  #2e2e4e;
-  --ivory:    #faf7f3;
-  --ivory-2:  #f3eee7;
+  /* — Couleurs — palette rose dominante (demande client) */
+  --night:    #2b1424;   /* nuit framboise — sections sombres, encre */
+  --night-2:  #3a1c31;
+  --night-3:  #4b2640;
+  --ivory:    #fdf5f9;   /* base claire rosée */
+  --ivory-2:  #f8e9f0;
   --paper:    #ffffff;
-  --coral:    #e94560;
-  --coral-deep:#cc3450;
-  --coral-soft:#fbe4e8;
+  --coral:    #ec4899;   /* rose vif — accent primaire / CTA */
+  --coral-deep:#db2777;
+  --coral-soft:#fce7f3;
   --gold:     #efa838;
   --gold-soft:#f8e2bd;
-  --ink:      #1a1a2e;
-  --muted:    #6c6c7e;
-  --muted-2:  #9a9aa8;
-  --line:     rgba(26,26,46,0.10);
-  --line-2:   rgba(26,26,46,0.06);
+  --ink:      #2b1424;
+  --muted:    #7d6473;
+  --muted-2:  #a892a0;
+  --line:     rgba(43,20,36,0.10);
+  --line-2:   rgba(43,20,36,0.06);
   --line-dark:rgba(255,255,255,0.12);
 
   /* — Type — */
@@ -35,9 +35,9 @@
   --r-md: 14px;
   --r-lg: 22px;
   --r-pill: 999px;
-  --sh-sm: 0 1px 2px rgba(26,26,46,.06), 0 2px 8px rgba(26,26,46,.05);
-  --sh-md: 0 4px 14px rgba(26,26,46,.08), 0 12px 34px rgba(26,26,46,.07);
-  --sh-lg: 0 18px 60px rgba(26,26,46,.16);
+  --sh-sm: 0 1px 2px rgba(43,20,36,.06), 0 2px 8px rgba(43,20,36,.05);
+  --sh-md: 0 4px 14px rgba(43,20,36,.08), 0 12px 34px rgba(43,20,36,.07);
+  --sh-lg: 0 18px 60px rgba(43,20,36,.16);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -72,7 +72,7 @@ em.it    { font-style: italic; }
 }
 .btn:hover { transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
-.btn-primary { background: var(--coral); color: #fff; box-shadow: 0 6px 18px rgba(233,69,96,.28); }
+.btn-primary { background: var(--coral); color: #fff; box-shadow: 0 6px 18px rgba(236,72,153,.28); }
 .btn-primary:hover { background: var(--coral-deep); }
 .btn-dark    { background: var(--night); color: #fff; }
 .btn-ghost   { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
@@ -103,14 +103,14 @@ em.it    { font-style: italic; }
 /* — Inputs — */
 .field {
   width: 100%; padding: 13px 16px; border-radius: var(--r-sm);
-  border: 1.5px solid rgba(26,26,46,0.18); background: #fcfaf7;
+  border: 1.5px solid rgba(43,20,36,0.18); background: #fdfafc;
   font-size: 14.5px; font-family: var(--sans); color: var(--ink); outline: none;
   transition: border-color .15s, box-shadow .15s, background .15s;
 }
-.field:hover { border-color: rgba(26,26,46,0.30); }
+.field:hover { border-color: rgba(43,20,36,0.30); }
 .field:focus {
   border-color: var(--coral); background: var(--paper);
-  box-shadow: 0 0 0 3px rgba(233,69,96,.14);
+  box-shadow: 0 0 0 3px rgba(236,72,153,.14);
 }
 .field::placeholder { color: var(--muted-2); }
 /* select & textarea héritent du même rendu visible */

@@ -232,9 +232,9 @@ export default function AdminProducts() {
       {error && (
         <div
           style={{
-            background: 'rgba(233,69,96,.08)',
+            background: 'rgba(236,72,153,.08)',
             color: 'var(--coral-deep)',
-            border: '1px solid rgba(233,69,96,.25)',
+            border: '1px solid rgba(236,72,153,.25)',
             padding: '10px 14px',
             borderRadius: 'var(--r-md)',
             marginBottom: 16,
@@ -331,7 +331,7 @@ export default function AdminProducts() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(26,26,46,.55)',
+            background: 'rgba(43,20,36,.55)',
             zIndex: 999,
             display: 'flex',
             alignItems: 'center',

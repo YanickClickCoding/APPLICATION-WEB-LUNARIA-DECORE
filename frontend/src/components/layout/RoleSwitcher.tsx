@@ -22,7 +22,7 @@ export default function RoleSwitcher() {
       position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 1000,
       display: 'flex', alignItems: 'center', gap: 4, padding: 5,
       background: 'var(--night)', borderRadius: 'var(--r-pill)',
-      boxShadow: '0 10px 30px rgba(26,26,46,.35)', border: '1px solid rgba(255,255,255,.1)',
+      boxShadow: '0 10px 30px rgba(43,20,36,.35)', border: '1px solid rgba(255,255,255,.1)',
     }}>
       <span style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px 0 12px', color: 'rgba(255,255,255,.5)', fontSize: 12 }}>
         <Icon name="moon" size={14} color="var(--gold)" /> Vue

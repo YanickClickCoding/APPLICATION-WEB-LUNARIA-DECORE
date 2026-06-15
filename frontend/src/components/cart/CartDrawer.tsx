@@ -11,7 +11,7 @@ export default function CartDrawer() {
   return (
     <>
       <div onClick={closeCart}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(26,26,46,.5)', backdropFilter: 'blur(3px)', zIndex: 60 }} />
+        style={{ position: 'fixed', inset: 0, background: 'rgba(43,20,36,.5)', backdropFilter: 'blur(3px)', zIndex: 60 }} />
 
       <aside style={{
         position: 'fixed', right: 0, top: 0, height: '100%', width: '100%', maxWidth: 440,
