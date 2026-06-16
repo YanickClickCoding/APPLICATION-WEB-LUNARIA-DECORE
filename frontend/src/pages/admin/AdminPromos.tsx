@@ -131,7 +131,7 @@ export default function AdminPromos() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
           {rows.map((p) => (
-            <div key={p._id} className="card" style={{ padding: 22, boxShadow: 'var(--sh-sm)', opacity: p.isActive ? 1 : 0.6, borderColor: p.isActive ? 'rgba(236,72,153,.3)' : 'var(--line-2)' }}>
+            <div key={p._id} className="card" style={{ padding: 22, boxShadow: 'var(--sh-sm)', opacity: p.isActive ? 1 : 0.6, borderColor: p.isActive ? 'rgba(255,45,142,.3)' : 'var(--line-2)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                 <button onClick={() => copyCode(p.code)} title="Copier"
                   style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>

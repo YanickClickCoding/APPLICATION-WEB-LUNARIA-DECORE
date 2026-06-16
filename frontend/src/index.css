@@ -6,18 +6,26 @@
 @import "tailwindcss";
 
 :root {
-  /* — Couleurs — palette rose dominante (demande client) */
-  --night:    #2b1424;   /* nuit framboise — sections sombres, encre */
+  /* — Couleurs — rose en signature/accent, neutres pour respirer (premium) */
+  --night:    #2b1424;   /* nuit framboise — encre / texte foncé */
   --night-2:  #3a1c31;
   --night-3:  #4b2640;
-  --ivory:    #fdf5f9;   /* base claire rosée */
-  --ivory-2:  #f8e9f0;
+  --surface-dark: #7a1148;  /* framboise du hero — fonds de sections sombres */
+  /* Bases neutres : crème/blanc cassé plutôt que rose partout */
+  --ivory:    #faf6f2;   /* crème chaud — base claire principale */
+  --ivory-2:  #f3ece6;   /* beige doux — base alternée */
+  --blush:    #fdeef5;   /* rose très doux — pour zones d'accent ponctuelles */
+  --blush-2:  #fbe0ee;   /* rose pastel — accent ponctuel */
   --paper:    #ffffff;
-  --coral:    #ec4899;   /* rose vif — accent primaire / CTA */
-  --coral-deep:#db2777;
-  --coral-soft:#fce7f3;
-  --gold:     #efa838;
-  --gold-soft:#f8e2bd;
+  --coral:    #ff2d8e;   /* fuchsia — accent / CTA signature */
+  --coral-deep:#e11d74;
+  --coral-soft:#ffe3f1;
+  --gold:     #c79a4b;   /* or feutré — accent secondaire plus luxe */
+  --gold-soft:#f0e3c8;
+  --gold-bright:#efa838;  /* or vif — réservé aux fonds sombres */
+  /* — Dégradé festif rose → or (réservé CTA & hero) — */
+  --festive:  linear-gradient(120deg, #ff2d8e 0%, #ff5fa2 45%, #efa838 100%);
+  --festive-soft: linear-gradient(120deg, #ffe3f1 0%, #fff0dd 100%);
   --ink:      #2b1424;
   --muted:    #7d6473;
   --muted-2:  #a892a0;
@@ -38,6 +46,13 @@
   --sh-sm: 0 1px 2px rgba(43,20,36,.06), 0 2px 8px rgba(43,20,36,.05);
   --sh-md: 0 4px 14px rgba(43,20,36,.08), 0 12px 34px rgba(43,20,36,.07);
   --sh-lg: 0 18px 60px rgba(43,20,36,.16);
+
+  /* — Mise en page — */
+  --maxw: 1280px;       /* largeur max conteneur */
+  --gutter: 56px;       /* marge horizontale desktop */
+  --gutter-sm: 24px;    /* marge horizontale mobile */
+  --sec-y: 72px;        /* rythme vertical des sections */
+  --ease: cubic-bezier(.22,.61,.36,1);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -72,8 +87,8 @@ em.it    { font-style: italic; }
 }
 .btn:hover { transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
-.btn-primary { background: var(--coral); color: #fff; box-shadow: 0 6px 18px rgba(236,72,153,.28); }
-.btn-primary:hover { background: var(--coral-deep); }
+.btn-primary { background: var(--festive); color: #fff; box-shadow: 0 6px 18px rgba(255,45,142,.32); background-size: 140% 140%; transition: transform .15s, background-position .3s, box-shadow .15s; }
+.btn-primary:hover { background-position: 100% 0; box-shadow: 0 8px 22px rgba(255,45,142,.40); }
 .btn-dark    { background: var(--night); color: #fff; }
 .btn-ghost   { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
 .btn-ghost:hover { border-color: var(--coral); color: var(--coral); }
@@ -110,7 +125,7 @@ em.it    { font-style: italic; }
 .field:hover { border-color: rgba(43,20,36,0.30); }
 .field:focus {
   border-color: var(--coral); background: var(--paper);
-  box-shadow: 0 0 0 3px rgba(236,72,153,.14);
+  box-shadow: 0 0 0 3px rgba(255,45,142,.16);
 }
 .field::placeholder { color: var(--muted-2); }
 /* select & textarea héritent du même rendu visible */
@@ -139,4 +154,65 @@ select.field { appearance: none; -webkit-appearance: none; cursor: pointer;
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   html { scroll-behavior: auto; }
+}
+
+/* ============================================================
+   COUCHE LAYOUT — classes utilitaires (remplace les styles inline)
+   ============================================================ */
+
+/* — Conteneur centré largeur max — */
+.container { max-width: var(--maxw); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+.container-tight { max-width: 920px; margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+
+/* — Section : rythme vertical + fonds — */
+.section { padding-top: var(--sec-y); padding-bottom: var(--sec-y); }
+.section-sm { padding-top: 48px; padding-bottom: 48px; }
+.bg-ivory  { background: var(--ivory); }
+.bg-ivory-2{ background: var(--ivory-2); }
+.bg-paper  { background: var(--paper); }
+.bg-blush  { background: var(--blush); }
+.bg-night  { background: var(--surface-dark); color: #fff; }
+.bg-night-2{ background: var(--surface-dark); color: #fff; }
+.bg-coral  { background: var(--coral); color: #fff; }
+
+/* — En-tête de section — */
+.sec-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 32px; }
+.sec-head-center { text-align: center; margin-bottom: 44px; }
+.sec-title { font-size: clamp(30px, 4vw, 46px); margin: 12px 0 0; }
+.link-inline { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--coral); text-decoration: none; white-space: nowrap; }
+.link-inline:hover { gap: 11px; }
+
+/* — Grilles produits / cartes — */
+.grid { display: grid; gap: 24px; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* — Texte mesuré — */
+.lead { font-size: 17px; line-height: 1.7; color: var(--muted); max-width: 46ch; }
+.lead-light { color: rgba(255,255,255,.72); }
+
+/* — Carte image avec overlay (catégories / galerie) — */
+.tile { position: relative; overflow: hidden; border-radius: var(--r-lg); display: block; }
+.tile img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease); }
+.tile:hover img { transform: scale(1.06); }
+.tile-overlay { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 22px;
+  background: linear-gradient(to top, rgba(43,20,36,.74), transparent 62%); }
+.tile-label { color: #fff; font-family: var(--serif); font-size: 26px; font-weight: 600; }
+
+/* — Bandes lumineuses décoratives (halos hero) — */
+.glow { position: absolute; border-radius: 50%; pointer-events: none; }
+
+/* — Reveal au scroll (état initial, GSAP prend le relais) — */
+.reveal-sec { will-change: transform, opacity; }
+
+/* — Responsive global des conteneurs — */
+@media (max-width: 980px) {
+  .container, .container-tight { padding-left: var(--gutter-sm); padding-right: var(--gutter-sm); }
+  .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+  .sec-head { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 560px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  :root { --sec-y: 52px; }
 }

@@ -5,7 +5,7 @@ import CartDrawer from '@/components/cart/CartDrawer'
 
 export default function PublicLayout() {
   const { pathname } = useLocation()
-  // La home a un hero sombre → navbar transparente/blanche au départ
+  // La home a un hero au côté gauche sombre → navbar transparente/blanche au départ
   const dark = pathname === '/'
 
   return (

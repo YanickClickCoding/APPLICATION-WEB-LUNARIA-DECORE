@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
 import './index.css'
 import './styles/lunaria-tokens.css'
+import './styles/pages.css'
 
 const queryClient = new QueryClient({
   defaultOptions: {

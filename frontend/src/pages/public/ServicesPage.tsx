@@ -26,7 +26,7 @@ export default function ServicesPage() {
   return (
     <div>
       {/* Hero */}
-      <div style={{ background: 'var(--night)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface-dark)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -100, right: -60, width: 460, height: 460, borderRadius: '50%', background: 'radial-gradient(circle, rgba(239,168,56,.18), transparent 62%)' }} />
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '72px 56px', position: 'relative' }} className="lun-pad">
           <div className="eyebrow" style={{ color: 'var(--gold)' }}>Décoration clé-en-main</div>

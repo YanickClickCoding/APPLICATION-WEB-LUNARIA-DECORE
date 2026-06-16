@@ -46,28 +46,27 @@ export default function ProductPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto' }} className="lun-fiche">
+    <div className="lun-fiche">
       {/* Fil d'ariane */}
-      <div style={{ padding: '24px 56px 0', fontSize: 13, color: 'var(--muted)' }}>
-        <Link to="/catalogue" style={{ color: 'var(--muted)', textDecoration: 'none' }}>Boutique</Link>
-        <span style={{ margin: '0 8px' }}>/</span>
-        <span style={{ color: 'var(--muted)' }}>{cat}</span>
-        <span style={{ margin: '0 8px' }}>/</span>
-        <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{product.name}</span>
+      <div className="lun-fiche-bread">
+        <Link to="/catalogue">Boutique</Link>
+        <span className="lun-fiche-sep">/</span>
+        <span>{cat}</span>
+        <span className="lun-fiche-sep">/</span>
+        <span className="lun-fiche-current">{product.name}</span>
       </div>
 
-      <div className="lun-fiche-grid" style={{ display: 'flex', gap: 48, padding: '28px 56px 56px' }}>
+      <div className="lun-fiche-grid">
         {/* Galerie */}
-        <div style={{ flex: 1.1 }}>
-          <div style={{ height: 460, borderRadius: 'var(--r-lg)', overflow: 'hidden', background: 'var(--ivory-2)' }}>
-            {product.images?.[activeImg] && <img src={product.images[activeImg]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+        <div className="lun-fiche-gallery">
+          <div className="lun-fiche-main">
+            {product.images?.[activeImg] && <img src={product.images[activeImg]} alt={product.name} />}
           </div>
           {product.images?.length > 1 && (
-            <div style={{ display: 'flex', gap: 14, marginTop: 14 }}>
+            <div className="lun-fiche-thumbs">
               {product.images.slice(0, 4).map((img, i) => (
-                <button key={i} onClick={() => setActiveImg(i)}
-                  style={{ flex: 1, height: 96, borderRadius: 'var(--r-md)', overflow: 'hidden', border: i === activeImg ? '2px solid var(--coral)' : '2px solid transparent', cursor: 'pointer', padding: 0, background: 'var(--ivory-2)' }}>
-                  <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <button key={i} onClick={() => setActiveImg(i)} className={`lun-fiche-thumb ${i === activeImg ? 'is-active' : ''}`}>
+                  <img src={img} alt="" />
                 </button>
               ))}
             </div>
@@ -75,37 +74,37 @@ export default function ProductPage() {
         </div>
 
         {/* Infos */}
-        <div style={{ flex: 1 }}>
+        <div className="lun-fiche-info">
           <div className="eyebrow">{cat}</div>
-          <h1 className="display" style={{ fontSize: 52, margin: '12px 0 0', lineHeight: 1 }}>{product.name}</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 14, flexWrap: 'wrap' }}>
+          <h1 className="display lun-fiche-title">{product.name}</h1>
+          <div className="lun-fiche-rate">
             <Stars value={product.ratings?.average ?? 5} size={16} />
-            <span style={{ fontSize: 13.5, color: 'var(--muted)' }}>
+            <span className="lun-fiche-rate-txt">
               {(product.ratings?.average ?? 5).toFixed(1)} · {product.ratings?.count ?? 0} avis
             </span>
             {product.isFeatured && <span className="tag" style={{ background: 'var(--coral-soft)', color: 'var(--coral-deep)' }}>Best-seller</span>}
           </div>
-          <p style={{ fontSize: 16, color: 'var(--muted)', lineHeight: 1.7, marginTop: 22 }}>{product.description}</p>
+          <p className="lun-fiche-desc">{product.description}</p>
 
-          <div className="display" style={{ fontSize: 40, margin: '24px 0 4px', display: 'flex', alignItems: 'baseline', gap: 12 }}>
-            {fmt(product.price)} <span style={{ fontSize: 16, color: 'var(--muted)', fontFamily: 'var(--sans)' }}>CFA</span>
+          <div className="display lun-fiche-price">
+            {fmt(product.price)} <span className="cur">CFA</span>
             {product.comparePrice && (
               <>
-                <span style={{ fontSize: 20, color: 'var(--muted-2)', textDecoration: 'line-through', fontFamily: 'var(--sans)' }}>{fmt(product.comparePrice)}</span>
+                <span className="old">{fmt(product.comparePrice)}</span>
                 <span className="tag" style={{ background: 'var(--coral-soft)', color: 'var(--coral-deep)', fontSize: 13 }}>-{discount}%</span>
               </>
             )}
           </div>
-          <div style={{ fontSize: 13, color: product.stock > 0 ? 'var(--gold)' : 'var(--coral)', fontWeight: 600 }}>
+          <div className="lun-fiche-stock" style={{ color: product.stock > 0 ? 'var(--gold)' : 'var(--coral)' }}>
             ● {product.stock > 0 ? `En stock · installation sous 48h` : 'Rupture de stock'}
           </div>
 
           {product.stock > 0 && (
-            <div style={{ display: 'flex', gap: 14, marginTop: 30, alignItems: 'center', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 18, border: '1.5px solid var(--line)', borderRadius: 'var(--r-pill)', padding: '11px 18px' }}>
-                <button onClick={() => setQty(Math.max(1, qty - 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><Icon name="minus" size={16} /></button>
-                <span style={{ fontWeight: 700, minWidth: 16, textAlign: 'center' }}>{qty}</span>
-                <button onClick={() => setQty(Math.min(product.stock, qty + 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><Icon name="plus" size={16} /></button>
+            <div className="lun-fiche-buy">
+              <div className="lun-fiche-qty">
+                <button onClick={() => setQty(Math.max(1, qty - 1))}><Icon name="minus" size={16} /></button>
+                <span>{qty}</span>
+                <button onClick={() => setQty(Math.min(product.stock, qty + 1))}><Icon name="plus" size={16} /></button>
               </div>
               <button onClick={handleAdd} className="btn btn-primary btn-lg" style={{ flex: 1, minWidth: 200 }}>Ajouter au panier <Icon name="cart" size={18} color="#fff" /></button>
             </div>
@@ -114,30 +113,23 @@ export default function ProductPage() {
             Demander une décoration sur mesure
           </button>
 
-          <div style={{ display: 'flex', gap: 24, marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--line)', flexWrap: 'wrap' }}>
+          <div className="lun-fiche-reassure">
             {REASSURANCE.map(([ic, t]) => (
-              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 12.5, color: 'var(--muted)' }}>
+              <div key={t} className="lun-fiche-reassure-item">
                 <Icon name={ic} size={18} color="var(--coral)" /> {t}
               </div>
             ))}
           </div>
 
           {product.tags?.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 20 }}>
+            <div className="lun-fiche-tags">
               {product.tags.map((tag) => (
-                <span key={tag} style={{ fontSize: 12, color: 'var(--muted)', border: '1px solid var(--line)', padding: '4px 10px', borderRadius: 'var(--r-pill)' }}>#{tag}</span>
+                <span key={tag} className="lun-fiche-tag">#{tag}</span>
               ))}
             </div>
           )}
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 900px) {
-          .lun-fiche-grid { flex-direction: column !important; padding: 24px !important; }
-          .lun-fiche > div:first-child { padding: 20px 24px 0 !important; }
-        }
-      `}</style>
     </div>
   )
 }

@@ -28,7 +28,7 @@ export function AccountSidebar() {
   const { user } = useAuthStore()
   const { pathname } = useLocation()
   return (
-    <div style={{ width: 250, flexShrink: 0 }} className="lun-acc-side">
+    <div className="lun-acc-side">
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 26 }}>
         <div style={{ width: 54, height: 54, borderRadius: '50%', background: 'var(--coral-soft)', color: 'var(--coral-deep)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--serif)', fontSize: 24, fontWeight: 600 }}>
           {user?.firstName?.[0]?.toUpperCase() ?? 'C'}
@@ -59,7 +59,7 @@ export default function AccountPage() {
   const inProgress = orders.filter((o) => !['LIVRE', 'ANNULE'].includes(o.status)).length
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 56px 64px', display: 'flex', gap: 36 }} className="lun-acc">
+    <div className="lun-acc">
       <AccountSidebar />
       <div style={{ flex: 1, minWidth: 0 }}>
         <h1 className="display" style={{ fontSize: 40, margin: '0 0 6px' }}>Mes commandes</h1>
@@ -99,7 +99,6 @@ export default function AccountPage() {
           </div>
         )}
       </div>
-      <style>{`@media (max-width: 860px) { .lun-acc { flex-direction: column !important; padding: 28px 20px !important; } .lun-acc-side { width: 100% !important; } }`}</style>
     </div>
   )
 }

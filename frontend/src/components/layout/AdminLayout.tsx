@@ -7,6 +7,9 @@ import Logo from '@/components/ui/Logo'
 const navItems = [
   { label: 'Tableau de bord', to: '/admin',               icon: 'grid' },
   { label: 'Produits',       to: '/admin/produits',       icon: 'box' },
+  { label: 'Catégories',     to: '/admin/categories',     icon: 'grid' },
+  { label: 'Stock',          to: '/admin/stock',          icon: 'box' },
+  { label: 'Fournisseurs',   to: '/admin/fournisseurs',   icon: 'truck' },
   { label: 'Commandes',      to: '/admin/commandes',      icon: 'cart' },
   { label: 'Planifications', to: '/admin/planification',  icon: 'cal' },
   { label: 'Messages',       to: '/admin/messages',       icon: 'chat', badge: true },
@@ -59,26 +62,24 @@ export default function AdminLayout() {
               </NavLink>
             )
           })}
+
+          {/* Voir le site comme un client (nouvel onglet) */}
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 'var(--r-sm)', marginTop: 8,
+              background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.8)', fontSize: 14, fontWeight: 600, textDecoration: 'none',
+            }}
+          >
+            <Icon name="eye" size={18} color="var(--gold)" />
+            <span style={{ flex: 1 }}>Voir la boutique</span>
+            <Icon name="arrowsm" size={15} color="rgba(255,255,255,.5)" />
+          </a>
         </div>
 
         <div style={{ paddingTop: 20, marginTop: 'auto' }}>
-          {/* Bascule Vue Client / Admin */}
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 10.5, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '0 4px 8px', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Icon name="moon" size={12} color="var(--gold)" /> Vue
-            </div>
-            <div style={{ display: 'flex', gap: 4, padding: 4, background: 'rgba(255,255,255,.06)', borderRadius: 'var(--r-pill)' }}>
-              <button onClick={() => navigate('/')}
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', borderRadius: 'var(--r-pill)', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'var(--sans)', background: 'transparent', color: 'rgba(255,255,255,.7)' }}>
-                <Icon name="user" size={14} color="rgba(255,255,255,.7)" /> Client
-              </button>
-              <button disabled
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 10px', borderRadius: 'var(--r-pill)', border: 'none', cursor: 'default', fontSize: 13, fontWeight: 700, fontFamily: 'var(--sans)', background: 'var(--coral)', color: '#fff' }}>
-                <Icon name="grid" size={14} color="#fff" /> Admin
-              </button>
-            </div>
-          </div>
-
           <button
             onClick={() => { logout(); navigate('/') }}
             style={{

@@ -7,6 +7,7 @@ import { useCartStore } from '@/stores/useCartStore'
 import { useChatStore } from '@/stores/useChatStore'
 
 const LINKS = [
+  { label: 'Accueil', to: '/' },
   { label: 'Boutique', to: '/catalogue' },
   { label: 'Décorations', to: '/services' },
   { label: 'Réalisations', to: '/galerie' },
@@ -35,68 +36,54 @@ export default function Navbar({ dark = false }: NavbarProps) {
 
   return (
     <header
-      className="lun-nav"
+      className={`lun-nav${scrolled ? ' is-scrolled' : ''}`}
       style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: scrolled ? '14px 56px' : '22px 56px',
+        color: fg,
         borderBottom: `1px solid ${onDark ? 'var(--line-dark)' : 'var(--line-2)'}`,
         background: onDark ? 'transparent' : 'rgba(255,255,255,.82)',
         backdropFilter: onDark ? 'none' : 'blur(10px)',
-        transition: 'padding .3s, background .3s',
       }}
     >
-      <Logo color={fg} mark={onDark ? 'var(--gold)' : 'var(--coral)'} />
+      <Logo color={fg} mark={onDark ? 'var(--gold-bright)' : 'var(--coral)'} />
 
-      <nav className="lun-nav-links" style={{ display: 'flex', gap: 34 }}>
+      <nav className="lun-nav-links">
         {LINKS.map((l) => (
-          <NavLink key={l.to} to={l.to}
-            style={({ isActive }) => ({
-              fontSize: 14.5, fontWeight: isActive ? 600 : 500,
-              color: isActive ? fg : sub, position: 'relative', textDecoration: 'none', paddingBottom: 4,
-            })}>
+          <NavLink key={l.to} to={l.to} end={l.to === '/'} className="lun-nav-link"
+            style={({ isActive }) => ({ color: isActive ? fg : sub, fontWeight: isActive ? 600 : 500 })}>
             {({ isActive }) => (
               <>
                 {l.label}
-                {isActive && <span style={{ position: 'absolute', left: 0, right: 0, bottom: -2, height: 2, background: 'var(--coral)', borderRadius: 2 }} />}
+                {isActive && <span className="lun-nav-underline" />}
               </>
             )}
           </NavLink>
         ))}
       </nav>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20, color: fg }}>
-        <button onClick={() => navigate('/catalogue')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+      <div className="lun-nav-actions" style={{ color: fg }}>
+        <button onClick={() => navigate('/catalogue')} className="lun-icon-btn" aria-label="Rechercher">
           <Icon name="search" size={20} color={fg} />
         </button>
         {isAuthenticated && (
-          <button onClick={() => navigate('/compte/favoris')} className="lun-nav-links" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+          <button onClick={() => navigate('/compte/favoris')} className="lun-icon-btn lun-nav-hide" aria-label="Favoris">
             <Icon name="heart" size={20} color={fg} />
           </button>
         )}
         {isAuthenticated && user?.role !== 'ADMIN' && (
-          <button onClick={() => navigate('/compte/messages')} className="lun-nav-links" style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+          <button onClick={() => navigate('/compte/messages')} className="lun-icon-btn lun-nav-hide" aria-label="Messages">
             <Icon name="chat" size={20} color={fg} />
-            {unreadTotal > 0 && (
-              <span style={{ position: 'absolute', top: -6, right: -8, background: 'var(--coral)', color: '#fff', fontSize: 10, fontWeight: 700, minWidth: 16, height: 16, padding: '0 4px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {unreadTotal}
-              </span>
-            )}
+            {unreadTotal > 0 && <span className="lun-badge">{unreadTotal}</span>}
           </button>
         )}
-        <button onClick={openCart} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+        <button onClick={openCart} className="lun-icon-btn" aria-label="Panier">
           <Icon name="cart" size={20} color={fg} />
-          {itemCount > 0 && (
-            <span style={{ position: 'absolute', top: -6, right: -8, background: 'var(--coral)', color: '#fff', fontSize: 10, fontWeight: 700, minWidth: 16, height: 16, padding: '0 4px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {itemCount}
-            </span>
-          )}
+          {itemCount > 0 && <span className="lun-badge">{itemCount}</span>}
         </button>
 
-        <div className="lun-nav-links" style={{ width: 1, height: 20, background: onDark ? 'var(--line-dark)' : 'var(--line)' }} />
+        <div className="lun-nav-div lun-nav-hide" style={{ background: onDark ? 'var(--line-dark)' : 'var(--line)' }} />
 
         {isAuthenticated ? (
-          <div className="lun-nav-links" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="lun-nav-hide" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {user?.role === 'ADMIN' && (
               <button onClick={() => navigate('/admin')} className="btn btn-sm btn-ghost" style={{ borderColor: onDark ? 'var(--line-dark)' : 'var(--line)', color: fg }}>
                 Admin
@@ -106,33 +93,26 @@ export default function Navbar({ dark = false }: NavbarProps) {
               style={{ background: onDark ? '#fff' : 'var(--night)', color: onDark ? 'var(--night)' : '#fff' }}>
               <Icon name="user" size={15} color={onDark ? 'var(--night)' : '#fff'} /> Mon compte
             </button>
-            <button onClick={() => { logout(); navigate('/') }} title="Déconnexion"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+            <button onClick={() => { logout(); navigate('/') }} title="Déconnexion" className="lun-icon-btn">
               <Icon name="logout" size={18} color={sub} />
             </button>
           </div>
         ) : (
-          <button onClick={() => navigate('/connexion')} className="btn btn-sm lun-nav-links"
+          <button onClick={() => navigate('/connexion')} className="btn btn-sm lun-nav-hide"
             style={{ background: onDark ? '#fff' : 'var(--night)', color: onDark ? 'var(--night)' : '#fff' }}>
             Se connecter
           </button>
         )}
 
-        <button onClick={() => setMenuOpen(!menuOpen)} className="lun-burger"
-          style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer' }}>
+        <button onClick={() => setMenuOpen(!menuOpen)} className="lun-burger">
           <Icon name={menuOpen ? 'close' : 'menu'} size={24} color={fg} />
         </button>
       </div>
 
       {menuOpen && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0,
-          background: 'var(--paper)', borderBottom: '1px solid var(--line)',
-          padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 6, boxShadow: 'var(--sh-md)',
-        }}>
+        <div className="lun-mobile-menu">
           {LINKS.map((l) => (
-            <NavLink key={l.to} to={l.to} onClick={() => setMenuOpen(false)}
-              style={{ padding: '12px 8px', fontSize: 16, color: 'var(--ink)', textDecoration: 'none', borderBottom: '1px solid var(--line-2)' }}>
+            <NavLink key={l.to} to={l.to} end={l.to === '/'} onClick={() => setMenuOpen(false)} className="lun-mobile-link">
               {l.label}
             </NavLink>
           ))}
@@ -148,14 +128,6 @@ export default function Navbar({ dark = false }: NavbarProps) {
           )}
         </div>
       )}
-
-      <style>{`
-        @media (max-width: 900px) {
-          .lun-nav { padding: 16px 20px !important; }
-          .lun-nav-links { display: none !important; }
-          .lun-burger { display: flex !important; }
-        }
-      `}</style>
     </header>
   )
 }

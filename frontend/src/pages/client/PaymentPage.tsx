@@ -47,7 +47,7 @@ export default function PaymentPage() {
   const opLabel = method === 'MTN_MOMO' ? 'MTN MoMo' : 'Moov Money'
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--night)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--surface-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: -100, left: -60, width: 460, height: 460, borderRadius: '50%', background: 'radial-gradient(circle, rgba(239,168,56,.18), transparent 62%)' }} />
 
       <div style={{ width: 480, maxWidth: '100%', background: 'var(--paper)', borderRadius: 'var(--r-lg)', padding: 38, boxShadow: 'var(--sh-lg)', position: 'relative' }}>

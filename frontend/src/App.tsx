@@ -16,6 +16,7 @@ const ProductPage    = lazy(() => import('@/pages/public/ProductPage'))
 const ServicesPage   = lazy(() => import('@/pages/public/ServicesPage'))
 const ServicePage    = lazy(() => import('@/pages/public/ServicePage'))
 const GaleriePage    = lazy(() => import('@/pages/public/GaleriePage'))
+const AboutPage      = lazy(() => import('@/pages/public/AboutPage'))
 const LoginPage      = lazy(() => import('@/pages/public/LoginPage'))
 const RegisterPage   = lazy(() => import('@/pages/public/RegisterPage'))
 
@@ -33,6 +34,9 @@ const FavoritesPage  = lazy(() => import('@/pages/client/FavoritesPage'))
 // ─── Admin pages ────────────────────────────────────────────────
 const AdminDashboard  = lazy(() => import('@/pages/admin/AdminDashboard'))
 const AdminProducts   = lazy(() => import('@/pages/admin/AdminProducts'))
+const AdminCategories = lazy(() => import('@/pages/admin/AdminCategories'))
+const AdminStock      = lazy(() => import('@/pages/admin/AdminStock'))
+const AdminSuppliers  = lazy(() => import('@/pages/admin/AdminSuppliers'))
 const AdminServices   = lazy(() => import('@/pages/admin/AdminServices'))
 const AdminOrders     = lazy(() => import('@/pages/admin/AdminOrders'))
 const AdminPlanning   = lazy(() => import('@/pages/admin/AdminPlanning'))
@@ -63,6 +67,7 @@ export default function App() {
           <Route path="/services"       element={<ServicesPage />} />
           <Route path="/service/:slug"  element={<ServicePage />} />
           <Route path="/galerie"        element={<GaleriePage />} />
+          <Route path="/a-propos"       element={<AboutPage />} />
           <Route path="/connexion"      element={<LoginPage />} />
           <Route path="/inscription"    element={<RegisterPage />} />
         </Route>
@@ -88,6 +93,9 @@ export default function App() {
           <Route element={<AdminLayout />}>
             <Route path="/admin"                element={<AdminDashboard />} />
             <Route path="/admin/produits"       element={<AdminProducts />} />
+            <Route path="/admin/categories"     element={<AdminCategories />} />
+            <Route path="/admin/stock"          element={<AdminStock />} />
+            <Route path="/admin/fournisseurs"   element={<AdminSuppliers />} />
             <Route path="/admin/services"       element={<AdminServices />} />
             <Route path="/admin/commandes"      element={<AdminOrders />} />
             <Route path="/admin/planification"  element={<AdminPlanning />} />

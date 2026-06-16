@@ -4,7 +4,7 @@ import Moon from '@/components/ui/Moon'
 
 export default function NotFoundPage() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--night)', color: '#fff', textAlign: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-dark)', color: '#fff', textAlign: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: -100, right: -60, width: 460, height: 460, borderRadius: '50%', background: 'radial-gradient(circle, rgba(239,168,56,.16), transparent 62%)' }} />
       <div style={{ position: 'relative' }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Moon size={48} color="var(--gold)" /></div>

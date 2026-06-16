@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Icon from '@/components/ui/Icon'
 import { productsService } from '@/services/products.service'
+import api from '@/services/api'
 import type { Category, Product } from '@/types'
 
 type ProductStatus = 'ACTIF' | 'RUPTURE' | 'BROUILLON'
@@ -29,6 +30,7 @@ export default function AdminProducts() {
   const [error, setError] = useState<string | null>(null)
   const [products, setProducts] = useState<Product[]>([])
 
+  const [categories, setCategories] = useState<Category[]>([])
   const [categoryFilter, setCategoryFilter] = useState<string>('Tous')
   const categoriesPreset = useMemo(
     () => ['Tous', 'Chambre romantique', 'Mariage', 'Anniversaire', 'Saint-Valentin'],
@@ -100,6 +102,13 @@ export default function AdminProducts() {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, categoryFilter])
+
+  // Charge la liste des catégories (pour le menu déroulant du formulaire)
+  useEffect(() => {
+    api.get<Category[]>('/categories')
+      .then((r) => setCategories(r.data ?? []))
+      .catch(() => setCategories([]))
+  }, [])
 
   const openCreate = () => {
     setEditing(null)
@@ -232,9 +241,9 @@ export default function AdminProducts() {
       {error && (
         <div
           style={{
-            background: 'rgba(236,72,153,.08)',
+            background: 'rgba(255,45,142,.08)',
             color: 'var(--coral-deep)',
-            border: '1px solid rgba(236,72,153,.25)',
+            border: '1px solid rgba(255,45,142,.25)',
             padding: '10px 14px',
             borderRadius: 'var(--r-md)',
             marginBottom: 16,
@@ -343,90 +352,103 @@ export default function AdminProducts() {
             onClick={(e) => e.stopPropagation()}
             style={{
               width: '100%',
-              maxWidth: 760,
+              maxWidth: 720,
+              maxHeight: '92vh',
               background: 'var(--paper)',
               borderRadius: 'var(--r-lg)',
               border: '1px solid var(--line-2)',
               boxShadow: 'var(--sh-lg)',
+              display: 'flex',
+              flexDirection: 'column',
               overflow: 'hidden',
             }}
           >
-            <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--line-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h2 className="display" style={{ fontSize: 26, margin: 0 }}>
-                  {editing ? 'Modifier le produit' : 'Ajouter un produit'}
-                </h2>
-                <div style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 4 }}>CRUD produit (JSON → multipart dans ce projet)</div>
-              </div>
-              <button onClick={() => setModalOpen(false)} className="btn btn-ghost btn-sm">
-                Fermer
-              </button>
+            {/* En-tête fixe */}
+            <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--line-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <h2 className="display" style={{ fontSize: 24, margin: 0 }}>
+                {editing ? 'Modifier le produit' : 'Ajouter un produit'}
+              </h2>
+              <button onClick={() => setModalOpen(false)} className="btn btn-ghost btn-sm">Fermer</button>
             </div>
 
-            <div style={{ padding: 22, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                Nom
-                <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="field" />
-              </label>
+            {/* Corps scrollable */}
+            <div style={{ padding: 24, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 26 }}>
+              {/* — Section : Informations — */}
+              <section>
+                <div className="eyebrow" style={{ marginBottom: 14 }}>Informations</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="lun-form-grid">
+                  <label style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
+                    Nom du produit
+                    <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="field" placeholder="Ex: Arche fleurie blanche" />
+                  </label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                Prix (FCFA)
-                <input value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} className="field" />
-              </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
+                    Catégorie
+                    <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} className="field">
+                      <option value="">— Choisir une catégorie —</option>
+                      {categories.map((c) => (
+                        <option key={c._id} value={c._id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                Stock
-                <input value={form.stock} onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))} className="field" />
-              </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
+                    Prix (FCFA)
+                    <input type="number" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} className="field" />
+                  </label>
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                Catégorie (ID)
-                <input value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} className="field" placeholder="Ex: 664..." />
-              </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
+                    Stock disponible
+                    <input type="number" value={form.stock} onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))} className="field" />
+                  </label>
 
-              <label style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                Description
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  className="field"
-                  rows={4}
-                />
-              </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
+                    Tags <span style={{ fontWeight: 400, color: 'var(--muted-2)', fontSize: 12 }}>(séparés par des virgules)</span>
+                    <input value={form.tags} onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))} className="field" placeholder="romantique, nuit" />
+                  </label>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input type="checkbox" checked={form.isAvailable} onChange={(e) => setForm((f) => ({ ...f, isAvailable: e.target.checked }))} />
-                Disponible
-              </label>
+                  <label style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
+                    Description
+                    <textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className="field" rows={4} style={{ resize: 'vertical' }} placeholder="Décrivez le produit, ses dimensions, ce qui est inclus…" />
+                  </label>
+                </div>
+              </section>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input
-                  type="checkbox"
-                  checked={form.isFeatured}
-                  onChange={(e) => setForm((f) => ({ ...f, isFeatured: e.target.checked }))}
-                />
-                Featured
-              </label>
+              {/* — Section : Options de publication — */}
+              <section>
+                <div className="eyebrow" style={{ marginBottom: 14 }}>Publication</div>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <label style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', border: '1px solid var(--line-2)', borderRadius: 'var(--r-md)', cursor: 'pointer', background: form.isAvailable ? 'var(--coral-soft)' : 'var(--paper)' }}>
+                    <input type="checkbox" checked={form.isAvailable} onChange={(e) => setForm((f) => ({ ...f, isAvailable: e.target.checked }))} />
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>Disponible</div>
+                      <div style={{ fontSize: 12, color: 'var(--muted)' }}>Visible et achetable en boutique</div>
+                    </div>
+                  </label>
+                  <label style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', border: '1px solid var(--line-2)', borderRadius: 'var(--r-md)', cursor: 'pointer', background: form.isFeatured ? 'var(--coral-soft)' : 'var(--paper)' }}>
+                    <input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm((f) => ({ ...f, isFeatured: e.target.checked }))} />
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>Mis en avant</div>
+                      <div style={{ fontSize: 12, color: 'var(--muted)' }}>Affiché en page d'accueil</div>
+                    </div>
+                  </label>
+                </div>
+              </section>
 
-
-              <label style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                Tags (séparés par des virgules)
-                <input value={form.tags} onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))} className="field" placeholder="romantique, nuit" />
-              </label>
-
-              <label style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                Photos du produit <span style={{ fontSize: 12, color: 'var(--muted-2)', fontWeight: 400 }}>(une URL d'image par ligne — la 1ʳᵉ est la photo principale)</span>
+              {/* — Section : Photos — */}
+              <section>
+                <div className="eyebrow" style={{ marginBottom: 6 }}>Photos du produit</div>
+                <div style={{ fontSize: 12.5, color: 'var(--muted)', marginBottom: 10 }}>Une URL d'image par ligne — la 1ʳᵉ est la photo principale.</div>
                 <textarea
                   value={form.images}
                   onChange={(e) => setForm((f) => ({ ...f, images: e.target.value }))}
                   className="field"
                   rows={4}
                   placeholder={'https://exemple.com/photo1.jpg\nhttps://exemple.com/photo2.jpg'}
-                  style={{ resize: 'vertical', fontFamily: 'var(--mono)', fontSize: 12.5 }}
+                  style={{ resize: 'vertical', fontFamily: 'var(--mono)', fontSize: 12.5, width: '100%' }}
                 />
-                {/* Aperçu des images saisies */}
                 {form.images.split(/[\n,]/).map((s) => s.trim()).filter(Boolean).length > 0 && (
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 8 }}>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
                     {form.images.split(/[\n,]/).map((s) => s.trim()).filter(Boolean).map((url, i) => (
                       <div key={i} style={{ position: 'relative', width: 64, height: 64, borderRadius: 'var(--r-sm)', overflow: 'hidden', border: '1px solid var(--line-2)', background: 'var(--ivory-2)' }}>
                         <img src={url} alt={`photo ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -436,13 +458,12 @@ export default function AdminProducts() {
                     ))}
                   </div>
                 )}
-              </label>
+              </section>
             </div>
 
-            <div style={{ padding: 22, borderTop: '1px solid var(--line-2)', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-              <button className="btn btn-ghost" onClick={() => setModalOpen(false)}>
-                Annuler
-              </button>
+            {/* Pied fixe */}
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--line-2)', display: 'flex', justifyContent: 'flex-end', gap: 12, flexShrink: 0 }}>
+              <button className="btn btn-ghost" onClick={() => setModalOpen(false)}>Annuler</button>
               <button className="btn btn-primary" onClick={onSave} disabled={loading || !form.name || !form.category}>
                 {loading ? 'En cours…' : editing ? 'Enregistrer' : 'Créer'}
               </button>

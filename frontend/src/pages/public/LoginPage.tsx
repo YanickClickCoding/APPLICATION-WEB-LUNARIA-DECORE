@@ -44,7 +44,7 @@ export default function LoginPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex' }} className="lun-auth">
       {/* Visuel gauche */}
-      <div className="lun-auth-visual" style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'var(--night)' }}>
+      <div className="lun-auth-visual" style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'var(--surface-dark)' }}>
         <img src={HERO.valentine} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: .55 }} />
         <div style={{ position: 'absolute', inset: 0, padding: 56, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: 'linear-gradient(to top, rgba(43,20,36,.7), transparent)' }}>
           <Logo color="#fff" mark="var(--gold)" />

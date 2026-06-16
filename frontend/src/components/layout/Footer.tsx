@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import Logo from '@/components/ui/Logo'
+import Icon from '@/components/ui/Icon'
+import { CONTACT } from '@/utils/contact'
 
 const COLS: [string, { label: string; to: string }[]][] = [
   ['Boutique', [
@@ -24,37 +26,43 @@ const COLS: [string, { label: string; to: string }[]][] = [
 
 export default function Footer() {
   return (
-    <footer style={{ background: 'var(--night)', color: '#fff', padding: '64px 56px 36px' }} className="lun-footer">
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 60, flexWrap: 'wrap' }}>
-        <div style={{ maxWidth: 300 }}>
-          <Logo color="#fff" mark="var(--gold)" />
-          <p style={{ marginTop: 18, fontSize: 14, color: 'rgba(255,255,255,.6)', lineHeight: 1.7 }}>
+    <footer className="lun-footer">
+      <div className="lun-footer-top">
+        <div className="lun-footer-about">
+          <Logo color="#fff" mark="var(--gold-bright)" />
+          <p className="lun-footer-desc">
             L'art de sublimer vos moments. Décorations romantiques et festives, livrées et installées à Cotonou.
           </p>
-          <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-            <span className="tag" style={{ background: 'rgba(255,255,255,.08)', color: '#fff' }}>MTN MoMo</span>
-            <span className="tag" style={{ background: 'rgba(255,255,255,.08)', color: '#fff' }}>Moov Money</span>
+          <div className="lun-footer-pays">
+            <span className="tag lun-footer-pay">MTN MoMo</span>
+            <span className="tag lun-footer-pay">Moov Money</span>
+          </div>
+          <div className="lun-footer-socials">
+            <a href={CONTACT.whatsapp} target="_blank" rel="noopener noreferrer" className="lun-footer-soc" aria-label="WhatsApp"><Icon name="whatsapp" size={18} color="#fff" /></a>
+            <a href={CONTACT.facebook} target="_blank" rel="noopener noreferrer" className="lun-footer-soc" aria-label="Facebook"><Icon name="facebook" size={18} color="#fff" /></a>
+            <a href={CONTACT.tiktok} target="_blank" rel="noopener noreferrer" className="lun-footer-soc" aria-label="TikTok"><Icon name="tiktok" size={18} color="#fff" /></a>
+          </div>
+          <div className="lun-footer-contact">
+            <a href={`tel:${CONTACT.phones[0].replace(/\s/g, '')}`} className="lun-footer-link">{CONTACT.phones[0]}</a>
+            <a href={`mailto:${CONTACT.email}`} className="lun-footer-link">{CONTACT.email}</a>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 64, flexWrap: 'wrap' }}>
+        <div className="lun-footer-cols">
           {COLS.map(([h, items]) => (
             <div key={h}>
-              <div className="eyebrow" style={{ color: 'var(--gold)', marginBottom: 16 }}>{h}</div>
+              <div className="eyebrow lun-footer-h">{h}</div>
               {items.map((it) => (
-                <Link key={it.label} to={it.to} style={{ display: 'block', fontSize: 14, color: 'rgba(255,255,255,.7)', marginBottom: 11, textDecoration: 'none' }}>
-                  {it.label}
-                </Link>
+                <Link key={it.label} to={it.to} className="lun-footer-link">{it.label}</Link>
               ))}
             </div>
           ))}
         </div>
       </div>
-      <div style={{ height: 1, background: 'var(--line-dark)', margin: '40px 0 22px' }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: 'rgba(255,255,255,.45)', flexWrap: 'wrap', gap: 12 }}>
+      <div className="lun-footer-rule" />
+      <div className="lun-footer-bottom">
         <span>© {new Date().getFullYear()} LUNARIA Décoration · Cotonou, Bénin</span>
         <span>Confidentialité · CGV</span>
       </div>
-      <style>{`@media (max-width: 900px) { .lun-footer { padding: 48px 20px 28px !important; } }`}</style>
     </footer>
   )
 }

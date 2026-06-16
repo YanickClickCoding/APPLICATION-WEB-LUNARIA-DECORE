@@ -20,6 +20,8 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { UploadModule } from './upload/upload.module';
 import { AdminModule } from './admin/admin.module';
 import { PromosModule } from './promos/promos.module';
+import { SuppliersModule } from './suppliers/suppliers.module';
+import { StockModule } from './stock/stock.module';
 
 @Module({
   imports: [
@@ -47,6 +49,8 @@ import { PromosModule } from './promos/promos.module';
     UploadModule,
     AdminModule,
     PromosModule,
+    SuppliersModule,
+    StockModule,
   ],
   controllers: [AppController],
   providers: [AppService],

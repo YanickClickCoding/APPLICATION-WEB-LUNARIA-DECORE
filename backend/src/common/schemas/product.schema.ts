@@ -15,6 +15,8 @@ export class Product {
   @Prop({ type: Types.ObjectId, ref: 'Category' }) category: Types.ObjectId;
   @Prop([String]) tags: string[];
   @Prop({ default: 0 }) stock: number;
+  @Prop({ default: 5 }) lowStockThreshold: number;
+  @Prop({ type: Types.ObjectId, ref: 'Supplier' }) supplier: Types.ObjectId;
   @Prop({ default: true }) isAvailable: boolean;
   @Prop({ default: false }) isFeatured: boolean;
   @Prop({ default: false }) isArchived: boolean;

@@ -9,18 +9,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  /* — Couleurs — palette rose dominante (demande client) */
+  /* — Couleurs — rose en signature/accent, neutres pour respirer (premium) */
   --night:    #2b1424;   /* nuit framboise — sections sombres, encre */
   --night-2:  #3a1c31;   /* surface sombre relevée */
   --night-3:  #4b2640;
-  --ivory:    #fdf5f9;   /* base claire rosée */
-  --ivory-2:  #f8e9f0;   /* base alternée */
+  --ivory:    #faf6f2;   /* crème chaud — base claire principale */
+  --ivory-2:  #f3ece6;   /* beige doux — base alternée */
+  --blush:    #fdeef5;   /* rose très doux — accent ponctuel */
+  --blush-2:  #fbe0ee;   /* rose pastel — accent ponctuel */
   --paper:    #ffffff;
-  --coral:    #ec4899;   /* rose vif — accent primaire / CTA */
-  --coral-deep:#db2777;
-  --coral-soft:#fce7f3;
-  --gold:     #efa838;   /* accent secondaire festif */
-  --gold-soft:#f8e2bd;
+  --coral:    #ff2d8e;   /* fuchsia — accent / CTA signature */
+  --coral-deep:#e11d74;
+  --coral-soft:#ffe3f1;
+  --gold:     #c79a4b;   /* or feutré — accent secondaire plus luxe */
+  --gold-soft:#f0e3c8;
+  --gold-bright:#efa838;  /* or vif — réservé aux fonds sombres */
+  /* — Dégradé festif rose → or — */
+  --festive:  linear-gradient(120deg, #ff2d8e 0%, #ff5fa2 45%, #efa838 100%);
+  --festive-soft: linear-gradient(120deg, #ffe3f1 0%, #fff0dd 100%);
   --ink:      #2b1424;
   --muted:    #7d6473;   /* texte secondaire */
   --muted-2:  #a892a0;
@@ -70,7 +76,7 @@
   padding: 14px 26px; border-radius: var(--r-pill); border: none; cursor: pointer;
   transition: transform .15s, background .15s, box-shadow .15s; white-space: nowrap;
 }
-.lun .btn-primary { background: var(--coral); color: #fff; box-shadow: 0 6px 18px rgba(236,72,153,.28); }
+.lun .btn-primary { background: var(--festive); color: #fff; box-shadow: 0 6px 18px rgba(255,45,142,.32); }
 .lun .btn-dark    { background: var(--night); color: #fff; }
 .lun .btn-ghost   { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
 .lun .btn-gold    { background: var(--gold); color: var(--night); }

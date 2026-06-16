@@ -21,7 +21,7 @@ export default function FavoritesPage() {
   })
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 56px 64px', display: 'flex', gap: 36 }} className="lun-acc">
+    <div className="lun-acc">
       <AccountSidebar />
       <div style={{ flex: 1, minWidth: 0 }}>
         <h1 className="display" style={{ fontSize: 40, margin: '0 0 24px' }}>Mes favoris</h1>
@@ -41,7 +41,8 @@ export default function FavoritesPage() {
       </div>
       <style>{`
         @keyframes lun-spin { to { transform: rotate(360deg); } }
-        @media (max-width: 860px) { .lun-acc { flex-direction: column !important; padding: 28px 20px !important; } .lun-acc-side { width: 100% !important; } .lun-fav-grid { grid-template-columns: 1fr 1fr !important; } }
+        @media (max-width: 860px) { .lun-fav-grid { grid-template-columns: 1fr 1fr !important; } }
+        @media (max-width: 520px) { .lun-fav-grid { grid-template-columns: 1fr !important; } }
       `}</style>
     </div>
   )
