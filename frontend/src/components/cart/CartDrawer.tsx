@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Icon from '@/components/ui/Icon'
 import { useCartStore } from '@/stores/useCartStore'
@@ -6,14 +7,23 @@ const fmt = (n: number) => n.toLocaleString('fr-FR') + ' F'
 
 export default function CartDrawer() {
   const { items, total, isOpen, closeCart, removeItem, updateQuantity } = useCartStore()
+
+  // Fermeture au clavier (Échap) — règle a11y "escape-routes"
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeCart() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isOpen, closeCart])
+
   if (!isOpen) return null
 
   return (
     <>
-      <div onClick={closeCart}
+      <div onClick={closeCart} aria-hidden="true"
         style={{ position: 'fixed', inset: 0, background: 'rgba(43,20,36,.5)', backdropFilter: 'blur(3px)', zIndex: 60 }} />
 
-      <aside style={{
+      <aside role="dialog" aria-modal="true" aria-label="Votre panier" style={{
         position: 'fixed', right: 0, top: 0, height: '100%', width: '100%', maxWidth: 440,
         background: 'var(--paper)', zIndex: 70, display: 'flex', flexDirection: 'column',
         boxShadow: 'var(--sh-lg)',
@@ -24,7 +34,7 @@ export default function CartDrawer() {
             <h2 className="serif" style={{ fontSize: 22, fontWeight: 600 }}>Votre panier</h2>
             <span className="tag" style={{ background: 'var(--coral-soft)', color: 'var(--coral-deep)' }}>{items.length}</span>
           </div>
-          <button onClick={closeCart} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+          <button onClick={closeCart} aria-label="Fermer le panier" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
             <Icon name="close" size={20} color="var(--muted)" />
           </button>
         </div>

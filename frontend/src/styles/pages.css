@@ -3,9 +3,13 @@
    (classes extraites des styles inline)
    ============================================================ */
 
-/* ─── Interface ADMIN : titres en gras ─── */
-.lun .display { font-weight: 700; letter-spacing: -0.015em; }
-.lun-admin-page .display { font-weight: 700; }
+/* ─── Interface ADMIN : grands titres en Montserrat (gras, condensé) ─── */
+.lun .display,
+.lun-admin-page .display {
+  font-family: 'Montserrat', var(--sans);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
 
 /* ─────────── Boutons additionnels ─────────── */
 .btn-glass { background: rgba(255,255,255,.12); color: #fff; backdrop-filter: blur(4px); }
@@ -100,21 +104,22 @@
 .lun-hero-title { font-size: clamp(44px, 7vw, 88px); line-height: .98; margin: 20px 0 0; font-weight: 500; }
 .lun-hero-cta { display: flex; gap: 14px; margin-top: 36px; flex-wrap: wrap; }
 .lun-hero-stats { display: flex; gap: 36px; margin-top: 48px; flex-wrap: wrap; }
-.lun-stat-num { font-size: 34px; color: #fff; }
+.lun-stat-num { font-size: 34px; color: var(--gold-bright); }
 .lun-stat-lbl { font-size: 12.5px; color: rgba(255,255,255,.55); margin-top: 2px; }
 
 .lun-hero-badge {
   display: inline-flex; align-items: center; gap: 12px; margin-top: 32px;
-  background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.18);
-  border-radius: var(--r-pill); padding: 12px 20px; backdrop-filter: blur(4px);
+  background: rgba(43,20,36,.4); color: #fff; border: 1px solid rgba(239,168,56,.4);
+  border-radius: var(--r-pill); padding: 12px 20px; backdrop-filter: blur(8px);
 }
 .lun-hero-badge-t { font-size: 13px; font-weight: 700; }
 .lun-hero-badge-s { font-size: 11.5px; color: rgba(255,255,255,.6); }
 
 /* ═══════════════════ HOME — RÉASSURANCE ═══════════════════ */
-.lun-trust { border-bottom: 1px solid var(--line-2); }
-.lun-trust-row { display: flex; justify-content: space-between; gap: 24px; padding-top: 22px; padding-bottom: 22px; flex-wrap: wrap; }
-.lun-trust-item { display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.lun-trust-wrap { position: relative; z-index: 10; margin-top: -36px; max-width: var(--maxw); margin-left: auto; margin-right: auto; padding: 0 var(--gutter); }
+.lun-trust { border-radius: var(--r-md); box-shadow: var(--sh-md); border: 1px solid var(--line-2); overflow: hidden; }
+.lun-trust-row { display: flex; justify-content: space-between; gap: 24px; padding: 24px 36px; flex-wrap: wrap; background: var(--paper); }
+.lun-trust-item { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; color: var(--ink); }
 
 /* ═══════════════════ HOME — CATÉGORIES ═══════════════════ */
 .lun-cat-tile { height: 200px; }
@@ -126,13 +131,15 @@
 .lun-feat-media img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
 .lun-feat-card:hover .lun-feat-media img { transform: scale(1.05); }
 .lun-feat-fav { position: absolute; top: 14px; left: 14px; width: 30px; height: 30px; border-radius: 50%;
-  background: rgba(255,255,255,.92); display: flex; align-items: center; justify-content: center; }
+  background: rgba(255,255,255,.92); display: flex; align-items: center; justify-content: center;
+  border: none; padding: 0; cursor: pointer; transition: transform .15s, background .15s; }
+.lun-feat-fav:hover { transform: scale(1.12); background: #fff; }
 .lun-feat-body { padding: 20px 22px 24px; }
 .lun-feat-head { display: flex; justify-content: space-between; align-items: flex-start; }
 .lun-feat-name { font-size: 24px; font-weight: 600; }
 .lun-feat-cat { font-size: 13px; color: var(--muted); margin-top: 2px; }
 .lun-feat-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
-.lun-feat-price { font-size: 26px; }
+.lun-feat-price { font-size: 26px; font-variant-numeric: tabular-nums; }
 
 /* ═══════════════════ HOME — COMMENT ÇA MARCHE ═══════════════════ */
 .lun-steps { gap: 28px; }
@@ -193,6 +200,41 @@
 .lun-acc { max-width: var(--maxw); margin: 0 auto; padding: 40px var(--gutter) 64px; display: flex; gap: 36px; }
 .lun-acc-side { width: 250px; flex-shrink: 0; }
 
+/* Ligne cliquable réutilisable (commandes, événements, favoris…) */
+.lun-row {
+  display: flex; align-items: center; gap: 18px; width: 100%;
+  padding: 18px 22px; text-align: left; cursor: pointer;
+  background: transparent; border: none; border-left: 3px solid transparent;
+  transition: background .18s ease, border-color .18s ease;
+}
+.lun-row + .lun-row { border-top: 1px solid var(--line-2); }
+.lun-row:hover { background: var(--ivory-2); }
+.lun-row:focus-visible {
+  outline: none; background: var(--ivory-2);
+  border-left-color: var(--coral); box-shadow: inset 0 0 0 2px var(--coral-soft);
+}
+.lun-row:active { background: var(--coral-soft); }
+@media (prefers-reduced-motion: reduce) { .lun-row { transition: none; } }
+
+/* Focus clavier visible sur tout conteneur rendu cliquable via role="button" */
+[role="button"]:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+}
+
+/* Focus clavier visible dans l'admin (beaucoup de boutons custom sans bordure) */
+.lun-admin-main button:focus-visible,
+.lun-admin-main a:focus-visible,
+.lun-admin-main [role="switch"]:focus-visible,
+.lun-admin-main [role="button"]:focus-visible,
+.lun-admin-main input:focus-visible,
+.lun-admin-main select:focus-visible,
+.lun-admin-main textarea:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
 @media (max-width: 860px) {
   .lun-acc { flex-direction: column; padding: 28px var(--gutter-sm); gap: 22px; }
   .lun-acc-side { width: 100%; }
@@ -229,14 +271,16 @@
 .lun-prodcard-media img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
 .lun-prodcard:hover .lun-prodcard-media img { transform: scale(1.05); }
 .lun-prodcard-fav { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%;
-  background: rgba(255,255,255,.92); display: flex; align-items: center; justify-content: center; }
+  background: rgba(255,255,255,.92); display: flex; align-items: center; justify-content: center;
+  border: none; padding: 0; cursor: pointer; transition: transform .15s, background .15s; }
+.lun-prodcard-fav:hover { transform: scale(1.12); background: #fff; }
 .lun-prodcard-promo { position: absolute; top: 12px; left: 12px; background: var(--coral); color: #fff;
   padding: 5px 10px; border-radius: var(--r-pill); font-size: 11px; font-weight: 700; }
 .lun-prodcard-body { padding: 16px 18px 20px; }
 .lun-prodcard-cat { font-size: 11.5px; color: var(--muted); }
 .lun-prodcard-name { font-size: 21px; font-weight: 600; margin-top: 3px; line-height: 1.15; }
 .lun-prodcard-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
-.lun-prodcard-price { font-size: 17px; font-weight: 700; }
+.lun-prodcard-price { font-family: var(--serif); font-size: 19px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .lun-prodcard-add { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--night);
   cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s, transform .15s; }
 .lun-prodcard-add:hover { background: var(--coral); transform: scale(1.08); }
@@ -262,7 +306,7 @@
 .lun-fiche-rate { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
 .lun-fiche-rate-txt { font-size: 13.5px; color: var(--muted); }
 .lun-fiche-desc { font-size: 16px; color: var(--muted); line-height: 1.7; margin-top: 22px; }
-.lun-fiche-price { font-size: 40px; margin: 24px 0 4px; display: flex; align-items: baseline; gap: 12px; }
+.lun-fiche-price { font-size: 40px; margin: 24px 0 4px; display: flex; align-items: baseline; gap: 12px; font-variant-numeric: tabular-nums; }
 .lun-fiche-price .cur { font-size: 16px; color: var(--muted); font-family: var(--sans); }
 .lun-fiche-price .old { font-size: 20px; color: var(--muted-2); text-decoration: line-through; font-family: var(--sans); }
 .lun-fiche-stock { font-size: 13px; font-weight: 600; }
@@ -376,12 +420,12 @@
 .lun-nav-links { display: flex; gap: 34px; }
 .lun-nav-link { font-size: 14.5px; font-weight: 500; position: relative; text-decoration: none; padding-bottom: 4px; }
 .lun-nav-link.is-active { font-weight: 600; }
-.lun-nav-underline { position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--coral); border-radius: 2px; }
+.lun-nav-underline { position: absolute; left: 0; right: 0; bottom: -6px; height: 2px; background: var(--gold-bright); border-radius: 2px; }
 .lun-nav-actions { display: flex; align-items: center; gap: 20px; }
 .lun-icon-btn { background: none; border: none; cursor: pointer; display: flex; position: relative; }
-.lun-badge { position: absolute; top: -6px; right: -8px; background: var(--coral); color: #fff; font-size: 10px;
-  font-weight: 700; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; display: flex;
-  align-items: center; justify-content: center; }
+.lun-badge { position: absolute; top: -6px; right: -8px; background: var(--gold-bright); color: var(--night); font-size: 10px;
+  font-weight: 800; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; display: flex;
+  align-items: center; justify-content: center; box-shadow: var(--sh-sm); }
 .lun-nav-div { width: 1px; height: 20px; }
 .lun-burger { display: none; background: none; border: none; cursor: pointer; }
 .lun-mobile-menu { position: absolute; top: 100%; left: 0; right: 0; background: var(--paper);
@@ -394,7 +438,7 @@
 }
 
 /* ═══════════════════ FOOTER ═══════════════════ */
-.lun-footer { background: var(--surface-dark); color: #fff; padding: 64px var(--gutter) 36px; }
+.lun-footer { background: var(--night); color: #fff; padding: 64px var(--gutter) 36px; }
 .lun-footer-top { display: flex; justify-content: space-between; gap: 60px; flex-wrap: wrap; }
 .lun-footer-about { max-width: 300px; }
 .lun-footer-desc { margin-top: 18px; font-size: 14px; color: rgba(255,255,255,.6); line-height: 1.7; }

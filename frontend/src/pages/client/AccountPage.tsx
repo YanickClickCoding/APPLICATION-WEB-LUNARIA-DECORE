@@ -25,8 +25,9 @@ const MENU: [string, string, string][] = [
 ]
 
 export function AccountSidebar() {
-  const { user } = useAuthStore()
+  const { user, logout } = useAuthStore()
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   return (
     <div className="lun-acc-side">
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 26 }}>
@@ -48,6 +49,12 @@ export function AccountSidebar() {
           </Link>
         )
       })}
+      <button onClick={() => { logout(); navigate('/') }}
+        style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 16px', borderRadius: 'var(--r-sm)',
+          background: 'transparent', border: '1px solid transparent', cursor: 'pointer',
+          fontSize: 14.5, fontWeight: 500, color: 'var(--muted)', marginTop: 12 }}>
+        <Icon name="logout" size={18} color="var(--muted)" /> Déconnexion
+      </button>
     </div>
   )
 }
@@ -81,9 +88,9 @@ export default function AccountPage() {
           </div>
         ) : (
           <div className="card" style={{ overflow: 'hidden', boxShadow: 'var(--sh-sm)' }}>
-            {orders.map((o, i) => (
-              <div key={o._id} onClick={() => navigate(`/compte/commandes/${o._id}`)}
-                style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 22px', borderBottom: i < orders.length - 1 ? '1px solid var(--line-2)' : 'none', cursor: 'pointer' }}>
+            {orders.map((o) => (
+              <button key={o._id} type="button" className="lun-row" onClick={() => navigate(`/compte/commandes/${o._id}`)}
+                aria-label={`Commande ${o.orderNumber}, ${STATUS_LABELS[o.status] ?? o.status}, ${fmt(o.total)}`}>
                 <div style={{ width: 60, height: 60, borderRadius: 'var(--r-sm)', overflow: 'hidden', flexShrink: 0, background: 'var(--ivory-2)' }}>
                   {o.items?.[0]?.image && <img src={o.items[0].image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                 </div>
@@ -94,7 +101,7 @@ export default function AccountPage() {
                 <span className="tag" style={{ background: 'var(--ivory-2)', color: STATUS_COLORS[o.status] ?? 'var(--muted)', fontWeight: 700 }}>● {STATUS_LABELS[o.status] ?? o.status}</span>
                 <div className="display" style={{ fontSize: 22, width: 110, textAlign: 'right' }}>{fmt(o.total)}</div>
                 <Icon name="chevr" size={18} color="var(--muted)" />
-              </div>
+              </button>
             ))}
           </div>
         )}

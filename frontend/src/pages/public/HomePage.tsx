@@ -9,6 +9,9 @@ import Stars from '@/components/ui/Stars'
 import WhatsAppFab from '@/components/ui/WhatsAppFab'
 import { productsService } from '@/services/products.service'
 import { useCartStore } from '@/stores/useCartStore'
+import { useAuthStore } from '@/stores/useAuthStore'
+import { useFavorites } from '@/hooks/useFavorites'
+import { clickable } from '@/hooks/useClickable'
 import { CATEGORIES, SERVICES, AVATARS } from '@/utils/images'
 import type { Product } from '@/types'
 
@@ -39,7 +42,10 @@ const TESTIMONIALS: [string, string, string, string][] = [
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const { isAuthenticated, user } = useAuthStore()
+  const isAdmin = user?.role === 'ADMIN'
   const { addProduct } = useCartStore()
+  const { isFavorite, toggle } = useFavorites()
 
   const { data: featured } = useQuery({
     queryKey: ['products', 'featured'],
@@ -84,7 +90,7 @@ export default function HomePage() {
               <button onClick={() => navigate('/compte/planification')} className="btn btn-lg btn-glass">Demander un devis</button>
             </div>
             <div className="hero-anim lun-hero-badge">
-              <Moon size={26} color="var(--coral)" />
+              <Moon size={26} color="var(--gold-bright)" />
               <div>
                 <div className="lun-hero-badge-t">Installation incluse</div>
                 <div className="lun-hero-badge-s">par notre équipe</div>
@@ -103,13 +109,15 @@ export default function HomePage() {
       </div>
 
       {/* ═══ BANDEAU RÉASSURANCE ═══ */}
-      <div className="bg-paper lun-trust reveal-sec">
-        <div className="container lun-trust-row">
-          {[['truck', 'Livraison & pose incluses'], ['cal', 'Devis sous 48h'], ['shield', 'Paiement Mobile Money sécurisé'], ['heart', '1 200+ clients comblés']].map(([ic, t]) => (
-            <div key={t} className="lun-trust-item">
-              <Icon name={ic} size={20} color="var(--coral)" /> <span>{t}</span>
-            </div>
-          ))}
+      <div className="lun-trust-wrap reveal-sec">
+        <div className="bg-paper lun-trust">
+          <div className="lun-trust-row">
+            {[['truck', 'Livraison & pose incluses'], ['cal', 'Devis sous 48h'], ['shield', 'Paiement Mobile Money sécurisé'], ['heart', '1 200+ clients comblés']].map(([ic, t]) => (
+              <div key={t} className="lun-trust-item">
+                <Icon name={ic} size={22} color="var(--gold)" /> <span>{t}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -141,10 +149,15 @@ export default function HomePage() {
             <div className="eyebrow" style={{ marginBottom: 28 }}>Nos créations phares</div>
             <div className="grid grid-3 lun-feat-grid">
               {feats.map((p) => (
-                <div key={p._id} onClick={() => navigate(`/produit/${p.slug}`)} className="card lun-feat-card">
+                <div key={p._id} {...clickable(() => navigate(`/produit/${p.slug}`), p.name)} className="card lun-feat-card">
                   <div className="lun-feat-media">
                     {p.images?.[0] && <img src={p.images[0]} alt={p.name} />}
-                    <span className="lun-feat-fav"><Icon name="heart" size={14} color="var(--coral)" /></span>
+                    {!isAdmin && (
+                      <button type="button" className="lun-feat-fav" aria-label={isFavorite(p._id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                        onClick={(e) => { e.stopPropagation(); toggle(p._id) }}>
+                        <Icon name="heart" size={14} color="var(--coral)" fill={isFavorite(p._id) ? 'var(--coral)' : 'none'} />
+                      </button>
+                    )}
                   </div>
                   <div className="lun-feat-body">
                     <div className="lun-feat-head">
@@ -156,7 +169,9 @@ export default function HomePage() {
                     </div>
                     <div className="lun-feat-foot">
                       <span className="display lun-feat-price">{fmt(p.price)}</span>
-                      <button onClick={(e) => { e.stopPropagation(); addProduct(p) }} className="btn btn-primary btn-sm">Ajouter <Icon name="plus" size={15} color="#fff" /></button>
+                      {!isAdmin && (
+                        <button onClick={(e) => { e.stopPropagation(); addProduct(p) }} className="btn btn-primary btn-sm">Ajouter <Icon name="plus" size={15} color="#fff" /></button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -232,7 +247,11 @@ export default function HomePage() {
       <div className="bg-coral lun-cta reveal-sec">
         <h2 className="display lun-cta-title">Prête à faire briller votre événement&nbsp;?</h2>
         <div className="lun-cta-actions">
-          <button onClick={() => navigate('/inscription')} className="btn btn-lg" style={{ background: '#fff', color: 'var(--coral)' }}>Créer mon compte</button>
+          {isAuthenticated ? (
+            <button onClick={() => navigate('/compte/planification')} className="btn btn-lg" style={{ background: '#fff', color: 'var(--coral)' }}>Planifier un événement</button>
+          ) : (
+            <button onClick={() => navigate('/inscription')} className="btn btn-lg" style={{ background: '#fff', color: 'var(--coral)' }}>Créer mon compte</button>
+          )}
           <button onClick={() => navigate('/catalogue')} className="btn btn-lg btn-glass">Parcourir la boutique</button>
         </div>
       </div>

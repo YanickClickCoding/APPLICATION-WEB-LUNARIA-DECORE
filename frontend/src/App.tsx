@@ -17,8 +17,7 @@ const ServicesPage   = lazy(() => import('@/pages/public/ServicesPage'))
 const ServicePage    = lazy(() => import('@/pages/public/ServicePage'))
 const GaleriePage    = lazy(() => import('@/pages/public/GaleriePage'))
 const AboutPage      = lazy(() => import('@/pages/public/AboutPage'))
-const LoginPage      = lazy(() => import('@/pages/public/LoginPage'))
-const RegisterPage   = lazy(() => import('@/pages/public/RegisterPage'))
+const AuthPage       = lazy(() => import('@/pages/public/AuthPage'))
 
 // ─── Client pages ───────────────────────────────────────────────
 const CartPage       = lazy(() => import('@/pages/client/CartPage'))
@@ -28,6 +27,7 @@ const AccountPage    = lazy(() => import('@/pages/client/AccountPage'))
 const OrdersPage     = lazy(() => import('@/pages/client/OrdersPage'))
 const OrderDetailPage = lazy(() => import('@/pages/client/OrderDetailPage'))
 const PlanningPage   = lazy(() => import('@/pages/client/PlanningPage'))
+const PlanningDetailPage = lazy(() => import('@/pages/client/PlanningDetailPage'))
 const MessagesPage   = lazy(() => import('@/pages/client/MessagesPage'))
 const FavoritesPage  = lazy(() => import('@/pages/client/FavoritesPage'))
 
@@ -37,6 +37,7 @@ const AdminProducts   = lazy(() => import('@/pages/admin/AdminProducts'))
 const AdminCategories = lazy(() => import('@/pages/admin/AdminCategories'))
 const AdminStock      = lazy(() => import('@/pages/admin/AdminStock'))
 const AdminSuppliers  = lazy(() => import('@/pages/admin/AdminSuppliers'))
+const AdminProfile    = lazy(() => import('@/pages/admin/AdminProfile'))
 const AdminServices   = lazy(() => import('@/pages/admin/AdminServices'))
 const AdminOrders     = lazy(() => import('@/pages/admin/AdminOrders'))
 const AdminPlanning   = lazy(() => import('@/pages/admin/AdminPlanning'))
@@ -68,22 +69,29 @@ export default function App() {
           <Route path="/service/:slug"  element={<ServicePage />} />
           <Route path="/galerie"        element={<GaleriePage />} />
           <Route path="/a-propos"       element={<AboutPage />} />
-          <Route path="/connexion"      element={<LoginPage />} />
-          <Route path="/inscription"    element={<RegisterPage />} />
+          <Route path="/connexion"      element={<AuthPage initialMode="login" />} />
+          <Route path="/inscription"    element={<AuthPage initialMode="signup" />} />
         </Route>
 
-        {/* ── Client (protégé) ─────────────────────────── */}
-        <Route element={<ProtectedRoute role="CLIENT" />}>
+        {/* ── Achat : strictement client (l'admin est redirigé vers /admin) ── */}
+        <Route element={<ProtectedRoute role="CLIENT" clientOnly />}>
           <Route element={<ClientLayout />}>
             <Route path="/panier"                     element={<CartPage />} />
             <Route path="/commande"                   element={<CheckoutPage />} />
             <Route path="/paiement/:paymentId"        element={<PaymentPage />} />
+            <Route path="/compte/favoris"             element={<FavoritesPage />} />
+          </Route>
+        </Route>
+
+        {/* ── Compte (client, accessible aussi à l'admin pour le suivi) ── */}
+        <Route element={<ProtectedRoute role="CLIENT" />}>
+          <Route element={<ClientLayout />}>
             <Route path="/compte"                     element={<AccountPage />} />
             <Route path="/compte/commandes"           element={<OrdersPage />} />
             <Route path="/compte/commandes/:id"       element={<OrderDetailPage />} />
             <Route path="/compte/planification"       element={<PlanningPage />} />
+            <Route path="/compte/planification/:id"   element={<PlanningDetailPage />} />
             <Route path="/compte/messages"            element={<MessagesPage />} />
-            <Route path="/compte/favoris"             element={<FavoritesPage />} />
             <Route path="/compte/parametres"          element={<ProfilePage />} />
           </Route>
         </Route>
@@ -96,6 +104,7 @@ export default function App() {
             <Route path="/admin/categories"     element={<AdminCategories />} />
             <Route path="/admin/stock"          element={<AdminStock />} />
             <Route path="/admin/fournisseurs"   element={<AdminSuppliers />} />
+            <Route path="/admin/profil"         element={<AdminProfile />} />
             <Route path="/admin/services"       element={<AdminServices />} />
             <Route path="/admin/commandes"      element={<AdminOrders />} />
             <Route path="/admin/planification"  element={<AdminPlanning />} />

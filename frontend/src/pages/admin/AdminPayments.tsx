@@ -72,7 +72,7 @@ export default function AdminPayments() {
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {FILTERS.map(([v, l]) => (
-            <span key={v} onClick={() => setStatusFilter(v)} className={`chip ${statusFilter === v ? 'chip-active' : ''}`} style={{ fontSize: 12.5, padding: '7px 14px' }}>{l}</span>
+            <button key={v} type="button" onClick={() => setStatusFilter(v)} aria-pressed={statusFilter === v} className={`chip ${statusFilter === v ? 'chip-active' : ''}`} style={{ fontSize: 12.5, padding: '7px 14px', cursor: 'pointer', font: 'inherit' }}>{l}</button>
           ))}
         </div>
       </div>

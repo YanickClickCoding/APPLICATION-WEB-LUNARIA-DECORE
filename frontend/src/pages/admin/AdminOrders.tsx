@@ -4,6 +4,7 @@ import Icon from '@/components/ui/Icon'
 import api from '@/services/api'
 import { useToastStore } from '@/stores/useToastStore'
 import type { Order, OrderStatus } from '@/types'
+import { clickable } from '@/hooks/useClickable'
 
 const fmt = (n: number) => (n ?? 0).toLocaleString('fr-FR') + ' F'
 
@@ -184,7 +185,7 @@ export default function AdminOrders() {
         ) : orders.length === 0 ? (
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--muted)' }}>Aucune commande {statusFilter ? 'pour ce filtre' : ''}.</div>
         ) : orders.map((o, i) => (
-          <div key={o._id} onClick={() => setSelectedId(o._id)} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr 120px 130px', alignItems: 'center', padding: '14px 24px', borderBottom: i < orders.length - 1 ? '1px solid var(--line-2)' : 'none', fontSize: 14, cursor: 'pointer' }}>
+          <div key={o._id} {...clickable(() => setSelectedId(o._id), `Commande ${o.orderNumber}`)} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr 120px 130px', alignItems: 'center', padding: '14px 24px', borderBottom: i < orders.length - 1 ? '1px solid var(--line-2)' : 'none', fontSize: 14, cursor: 'pointer' }}>
             <span className="mono" style={{ fontSize: 12.5, color: 'var(--muted)' }}>{o.orderNumber}</span>
             <span style={{ fontWeight: 600 }}>{o.client?.firstName} {o.client?.lastName?.[0]}.</span>
             <span style={{ color: 'var(--muted)' }}>{o.items?.[0]?.name}{o.items?.length > 1 ? ` +${o.items.length - 1}` : ''}</span>

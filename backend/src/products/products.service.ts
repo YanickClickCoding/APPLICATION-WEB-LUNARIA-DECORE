@@ -3,6 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, isValidObjectId } from 'mongoose';
 import { Product, ProductDocument } from '../common/schemas/product.schema';
 
+type SortKey = 'popular' | 'price-asc' | 'price-desc' | 'recent';
+
 interface ProductFilter {
   category?: string;
   search?: string;
@@ -10,7 +12,15 @@ interface ProductFilter {
   maxPrice?: number;
   page?: number;
   limit?: number;
+  sort?: SortKey;
 }
+
+const SORT_MAP: Record<SortKey, Record<string, 1 | -1>> = {
+  popular: { isFeatured: -1, 'ratings.average': -1, createdAt: -1 },
+  'price-asc': { price: 1 },
+  'price-desc': { price: -1 },
+  recent: { createdAt: -1 },
+};
 
 @Injectable()
 export class ProductsService {
@@ -26,6 +36,7 @@ export class ProductsService {
       maxPrice,
       page = 1,
       limit = 12,
+      sort = 'popular',
     } = filter;
     const query: Record<string, unknown> = {
       isArchived: false,
@@ -34,8 +45,10 @@ export class ProductsService {
 
     if (category) {
       // Accepte un ObjectId (id de catégorie) ou un slug de catégorie.
+      // Certains produits ont pu être enregistrés avec category en string :
+      // on matche donc à la fois l'ObjectId ET sa forme chaîne.
       query.category = isValidObjectId(category)
-        ? new Types.ObjectId(category)
+        ? { $in: [new Types.ObjectId(category), category] }
         : category;
     }
     if (search) query.$text = { $search: search };
@@ -50,7 +63,7 @@ export class ProductsService {
     const data = await this.productModel
       .find(query)
       .populate('category', 'name slug')
-      .sort({ createdAt: -1 })
+      .sort(SORT_MAP[sort] ?? SORT_MAP.popular)
       .skip((page - 1) * limit)
       .limit(limit)
       .exec();
@@ -80,14 +93,22 @@ export class ProductsService {
     return product;
   }
 
+  // Normalise category en ObjectId (le front l'envoie en string)
+  private normalizeCategory<T extends Record<string, unknown>>(data: T): T {
+    if (data.category && isValidObjectId(data.category)) {
+      return { ...data, category: new Types.ObjectId(data.category as string) };
+    }
+    return data;
+  }
+
   async create(data: Partial<Product>) {
     const slug = this.toSlug(data.name ?? '');
-    return this.productModel.create({ ...data, slug });
+    return this.productModel.create(this.normalizeCategory({ ...data, slug }));
   }
 
   async update(id: string, data: Partial<Product>) {
     const product = await this.productModel
-      .findByIdAndUpdate(id, { $set: data }, { new: true })
+      .findByIdAndUpdate(id, { $set: this.normalizeCategory({ ...data }) }, { new: true })
       .populate('category');
     if (!product) throw new NotFoundException('Produit introuvable');
     return product;

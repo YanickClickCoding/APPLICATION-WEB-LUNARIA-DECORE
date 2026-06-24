@@ -105,15 +105,15 @@ export default function AdminSuppliers() {
             <span style={{ color: 'var(--muted)' }}>{s.phone || '—'}</span>
             <span style={{ color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email || '—'}</span>
             <div style={{ display: 'flex', gap: 12, color: 'var(--muted)' }}>
-              <button type="button" onClick={() => openEdit(s)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><Icon name="edit" size={17} /></button>
-              <button type="button" onClick={() => onDelete(s)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><Icon name="trash" size={17} /></button>
+              <button type="button" onClick={() => openEdit(s)} aria-label={`Modifier le fournisseur ${s.name}`} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><Icon name="edit" size={17} /></button>
+              <button type="button" onClick={() => onDelete(s)} aria-label={`Supprimer le fournisseur ${s.name}`} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><Icon name="trash" size={17} /></button>
             </div>
           </div>
         ))}
       </div>
 
       {modalOpen && (
-        <div onClick={() => setModalOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(43,20,36,.55)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div onClick={() => setModalOpen(false)} role="dialog" aria-modal="true" aria-label="Fournisseur" style={{ position: 'fixed', inset: 0, background: 'rgba(43,20,36,.55)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 560, maxHeight: '92vh', background: 'var(--paper)', borderRadius: 'var(--r-lg)', border: '1px solid var(--line-2)', boxShadow: 'var(--sh-lg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--line-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
               <h2 className="display" style={{ fontSize: 24, margin: 0 }}>{editing ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}</h2>

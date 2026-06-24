@@ -5,7 +5,9 @@ import Icon from '@/components/ui/Icon'
 import Stars from '@/components/ui/Stars'
 import { productsService } from '@/services/products.service'
 import { useCartStore } from '@/stores/useCartStore'
+import { useAuthStore } from '@/stores/useAuthStore'
 import { useToastStore } from '@/stores/useToastStore'
+import { useFavorites } from '@/hooks/useFavorites'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 const fmt = (n: number) => n.toLocaleString('fr-FR')
@@ -21,6 +23,9 @@ export default function ProductPage() {
   const [activeImg, setActiveImg] = useState(0)
   const [qty, setQty] = useState(1)
   const { addProduct } = useCartStore()
+  const { isFavorite, toggle } = useFavorites()
+  const { user } = useAuthStore()
+  const isAdmin = user?.role === 'ADMIN'
   const toast = useToastStore()
   const navigate = useNavigate()
 
@@ -99,7 +104,7 @@ export default function ProductPage() {
             ● {product.stock > 0 ? `En stock · installation sous 48h` : 'Rupture de stock'}
           </div>
 
-          {product.stock > 0 && (
+          {product.stock > 0 && !isAdmin && (
             <div className="lun-fiche-buy">
               <div className="lun-fiche-qty">
                 <button onClick={() => setQty(Math.max(1, qty - 1))}><Icon name="minus" size={16} /></button>
@@ -107,6 +112,14 @@ export default function ProductPage() {
                 <button onClick={() => setQty(Math.min(product.stock, qty + 1))}><Icon name="plus" size={16} /></button>
               </div>
               <button onClick={handleAdd} className="btn btn-primary btn-lg" style={{ flex: 1, minWidth: 200 }}>Ajouter au panier <Icon name="cart" size={18} color="#fff" /></button>
+              <button onClick={() => toggle(product._id)} className="btn btn-ghost btn-lg" aria-label={isFavorite(product._id) ? 'Retirer des favoris' : 'Ajouter aux favoris'} style={{ padding: '0 18px' }}>
+                <Icon name="heart" size={20} color={isFavorite(product._id) ? 'var(--coral)' : 'var(--ink)'} fill={isFavorite(product._id) ? 'var(--coral)' : 'none'} />
+              </button>
+            </div>
+          )}
+          {isAdmin && (
+            <div style={{ marginTop: 8, padding: '12px 16px', background: 'var(--ivory-2)', borderRadius: 'var(--r-md)', fontSize: 13.5, color: 'var(--muted)' }}>
+              Vue administrateur — l'achat est réservé aux comptes clients.
             </div>
           )}
           <button onClick={() => navigate('/compte/planification')} className="btn btn-ghost btn-lg" style={{ width: '100%', marginTop: 12 }}>

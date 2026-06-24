@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import Icon from '@/components/ui/Icon'
 import api from '@/services/api'
 import type { Order } from '@/types'
+import { clickable } from '@/hooks/useClickable'
 
 const fmt = (n: number) => {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace('.0', '') + ' M F'
@@ -82,7 +83,7 @@ export default function AdminDashboard() {
               ['Livraisons en route', stats?.deliveries.inProgress ?? 0, 'var(--gold)', '/admin/livraisons'],
               ['Messages non lus', stats?.messages.unread ?? 0, 'var(--night)', '/admin/messages'],
             ].map(([l, v, c, to]) => (
-              <div key={l as string} onClick={() => navigate(to as string)}
+              <div key={l as string} {...clickable(() => navigate(to as string), l as string)}
                 style={{ background: 'var(--ivory)', borderRadius: 'var(--r-md)', padding: '18px 20px', cursor: 'pointer' }}>
                 <div className="display" style={{ fontSize: 34, color: c as string }}>{v as number}</div>
                 <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>{l as string}</div>
@@ -119,7 +120,7 @@ export default function AdminDashboard() {
         {recentOrders.length === 0 ? (
           <div style={{ padding: '32px 24px', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Aucune commande pour le moment.</div>
         ) : recentOrders.map((o, i) => (
-          <div key={o._id} onClick={() => navigate(`/admin/commandes/${o._id}`)} style={{ display: 'grid', gridTemplateColumns: '140px 1fr 1fr 120px 130px', alignItems: 'center', padding: '14px 24px', borderBottom: i < recentOrders.length - 1 ? '1px solid var(--line-2)' : 'none', fontSize: 14, cursor: 'pointer' }}>
+          <div key={o._id} {...clickable(() => navigate(`/admin/commandes/${o._id}`), `Commande ${o.orderNumber}`)} style={{ display: 'grid', gridTemplateColumns: '140px 1fr 1fr 120px 130px', alignItems: 'center', padding: '14px 24px', borderBottom: i < recentOrders.length - 1 ? '1px solid var(--line-2)' : 'none', fontSize: 14, cursor: 'pointer' }}>
             <span className="mono" style={{ fontSize: 12, color: 'var(--muted)' }}>{o.orderNumber}</span>
             <span style={{ fontWeight: 600 }}>{o.client?.firstName} {o.client?.lastName?.[0]}.</span>
             <span style={{ color: 'var(--muted)' }}>{o.items?.[0]?.name}{o.items?.length > 1 ? ` +${o.items.length - 1}` : ''}</span>

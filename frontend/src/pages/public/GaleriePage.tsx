@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Icon from '@/components/ui/Icon'
 import { GALLERY } from '@/utils/images'
+import { clickable } from '@/hooks/useClickable'
 
 const FILTERS = ['Toutes', 'Saint-Valentin', 'Mariage', 'Anniversaire', 'Fête des mères', 'Baptême', 'Lune de miel']
 
@@ -9,6 +10,14 @@ export default function GaleriePage() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState('Toutes')
   const [lightbox, setLightbox] = useState<number | null>(null)
+
+  // Fermeture de la lightbox au clavier (Échap) — règle a11y "escape-routes"
+  useEffect(() => {
+    if (lightbox === null) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightbox(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [lightbox])
 
   const filtered = filter === 'Toutes' ? GALLERY : GALLERY.filter((g) => g.occasion === filter)
 
@@ -37,7 +46,7 @@ export default function GaleriePage() {
 
           <div className="lun-masonry">
             {filtered.map((item, i) => (
-              <div key={`${filter}-${i}`} onClick={() => setLightbox(i)} className="lun-gal-item">
+              <div key={`${filter}-${i}`} {...clickable(() => setLightbox(i), `Agrandir : ${item.occasion} ${item.cat}`)} className="lun-gal-item">
                 <img src={item.src} alt={item.cat} />
                 <div className="lun-gal-overlay">
                   <span className="lun-gal-occ">{item.occasion}</span>
@@ -59,7 +68,7 @@ export default function GaleriePage() {
 
       {/* Lightbox */}
       {lightbox !== null && (
-        <div onClick={() => setLightbox(null)} className="lun-lightbox">
+        <div onClick={() => setLightbox(null)} className="lun-lightbox" role="dialog" aria-modal="true" aria-label="Aperçu de la réalisation">
           <button onClick={() => setLightbox(null)} className="lun-lb-btn lun-lb-close">
             <Icon name="close" size={18} color="#fff" />
           </button>

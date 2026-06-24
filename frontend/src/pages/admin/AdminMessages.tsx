@@ -245,10 +245,11 @@ export default function AdminMessages() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 22px', borderTop: '1px solid var(--line-2)', background: 'var(--paper)' }}>
                 <input value={text} onChange={(e) => setText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
+                  aria-label={`Répondre à ${clientName(active)}`}
                   placeholder={`Répondre à ${clientName(active)}…`}
                   style={{ flex: 1, padding: '12px 18px', borderRadius: 'var(--r-pill)', background: 'var(--ivory)', border: '1px solid var(--line)', fontSize: 14, outline: 'none' }} />
-                <button onClick={send} disabled={!text.trim()}
-                  style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: text.trim() ? 1 : .5 }}>
+                <button onClick={send} disabled={!text.trim()} aria-label="Envoyer le message"
+                  style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: 'var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: text.trim() ? 'pointer' : 'not-allowed', opacity: text.trim() ? 1 : .5 }}>
                   <Icon name="send" size={18} color="#fff" />
                 </button>
               </div>

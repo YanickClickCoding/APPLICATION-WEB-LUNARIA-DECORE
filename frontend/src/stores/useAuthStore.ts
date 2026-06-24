@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User } from '@/types'
+import { useCartStore } from './useCartStore'
 
 interface AuthState {
   user: User | null
@@ -23,6 +24,8 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (user, accessToken, refreshToken) => {
         localStorage.setItem('accessToken', accessToken)
         localStorage.setItem('refreshToken', refreshToken)
+        // Repart sur un panier propre : il ne doit jamais suivre d'un compte/visiteur à l'autre
+        useCartStore.getState().clear()
         set({ user, accessToken, refreshToken, isAuthenticated: true })
       },
 
@@ -31,6 +34,8 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
+        // Le panier appartient à la session : on le vide à la déconnexion
+        useCartStore.getState().clear()
         set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false })
       },
     }),

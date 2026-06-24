@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/useAuthStore'
 import { useChatStore } from '@/stores/useChatStore'
 import Icon from '@/components/ui/Icon'
 import Logo from '@/components/ui/Logo'
+import { clickable } from '@/hooks/useClickable'
 
 const navItems = [
   { label: 'Tableau de bord', to: '/admin',               icon: 'grid' },
@@ -30,7 +31,7 @@ export default function AdminLayout() {
     <div className="lun" style={{ width: '100%', minHeight: '100vh', background: 'var(--ivory)', display: 'flex' }}>
       {/* sidebar sombre */}
       <div style={{ width: 248, background: 'var(--night)', color: '#fff', padding: '26px 18px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
-        <div onClick={() => navigate('/admin')} style={{ padding: '0 8px 24px', cursor: 'pointer' }}>
+        <div {...clickable(() => navigate('/admin'), 'Accueil administration')} style={{ padding: '0 8px 24px', cursor: 'pointer' }}>
           <Logo size={20} color="#fff" mark="var(--gold)" />
         </div>
 
@@ -41,6 +42,7 @@ export default function AdminLayout() {
               <NavLink
                 key={to}
                 to={to}
+                aria-current={isActive ? 'page' : undefined}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 'var(--r-sm)', marginBottom: 3, cursor: 'pointer',
                   background: isActive ? 'rgba(255,255,255,.1)' : 'transparent',
@@ -99,11 +101,11 @@ export default function AdminLayout() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--line-2)', background: 'var(--paper)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--ivory)', borderRadius: 'var(--r-pill)', padding: '9px 16px', width: 300 }}>
             <Icon name="search" size={17} color="var(--muted)" />
-            <input type="text" placeholder="Rechercher…"
+            <input type="search" placeholder="Rechercher…" aria-label="Rechercher dans l'administration"
               style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13.5, color: 'var(--ink)', width: '100%' }} />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-            <button onClick={() => navigate('/admin/messages')} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+            <button onClick={() => navigate('/admin/messages')} aria-label={unreadTotal > 0 ? `Notifications, ${unreadTotal} non lues` : 'Notifications'} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
               <Icon name="bell" size={20} color="var(--muted)" />
               {unreadTotal > 0 && (
                 <span style={{ position: 'absolute', top: -5, right: -6, background: 'var(--coral)', color: '#fff', fontSize: 9, fontWeight: 700, minWidth: 15, height: 15, borderRadius: 8, padding: '0 4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -118,7 +120,7 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        <div style={{ padding: 32, flex: 1, overflowY: 'auto' }}>
+        <div className="lun-admin-main" style={{ padding: 32, flex: 1, overflowY: 'auto' }}>
           <Outlet />
         </div>
       </div>

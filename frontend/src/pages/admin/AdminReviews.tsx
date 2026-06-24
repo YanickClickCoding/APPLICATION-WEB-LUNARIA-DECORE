@@ -95,13 +95,13 @@ export default function AdminReviews() {
                   {review.status === 'EN_ATTENTE' && (
                     <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                       <button onClick={() => moderate.mutate({ id: review._id, action: 'approve' })} disabled={moderate.isPending}
-                        title="Approuver"
-                        style={{ width: 38, height: 38, borderRadius: '50%', border: '1px solid rgba(62,196,122,.3)', background: 'rgba(62,196,122,.08)', color: '#2c9c5e', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        title="Approuver" aria-label="Approuver l'avis"
+                        style={{ width: 44, height: 44, borderRadius: '50%', border: '1px solid rgba(62,196,122,.3)', background: 'rgba(62,196,122,.08)', color: '#2c9c5e', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Icon name="check" size={16} />
                       </button>
                       <button onClick={() => moderate.mutate({ id: review._id, action: 'reject' })} disabled={moderate.isPending}
-                        title="Refuser"
-                        style={{ width: 38, height: 38, borderRadius: '50%', border: '1px solid var(--coral-soft)', background: 'var(--coral-soft)', color: 'var(--coral-deep)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        title="Refuser" aria-label="Refuser l'avis"
+                        style={{ width: 44, height: 44, borderRadius: '50%', border: '1px solid var(--coral-soft)', background: 'var(--coral-soft)', color: 'var(--coral-deep)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Icon name="close" size={16} />
                       </button>
                     </div>

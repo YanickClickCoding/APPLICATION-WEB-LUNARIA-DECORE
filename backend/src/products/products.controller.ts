@@ -26,6 +26,7 @@ export class ProductsController {
     @Query('maxPrice') maxPrice: number,
     @Query('page') page: number,
     @Query('limit') limit: number,
+    @Query('sort') sort: 'popular' | 'price-asc' | 'price-desc' | 'recent',
   ) {
     return this.productsService.findAll({
       category,
@@ -34,6 +35,7 @@ export class ProductsController {
       maxPrice,
       page,
       limit,
+      sort,
     });
   }
 

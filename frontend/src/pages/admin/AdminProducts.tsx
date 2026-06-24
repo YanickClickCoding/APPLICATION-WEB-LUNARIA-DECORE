@@ -1,10 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Icon from '@/components/ui/Icon'
 import { productsService } from '@/services/products.service'
 import api from '@/services/api'
 import type { Category, Product } from '@/types'
 
 type ProductStatus = 'ACTIF' | 'RUPTURE' | 'BROUILLON'
+
+type SortKey = 'recent' | 'price-asc' | 'price-desc' | 'popular'
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'recent', label: 'Plus récents' },
+  { key: 'popular', label: 'Populaires' },
+  { key: 'price-asc', label: 'Prix croissant' },
+  { key: 'price-desc', label: 'Prix décroissant' },
+]
 
 function getStatus(p: Product): ProductStatus {
   if (!p.isAvailable || p.stock <= 0) return 'RUPTURE'
@@ -31,11 +39,13 @@ export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([])
 
   const [categories, setCategories] = useState<Category[]>([])
-  const [categoryFilter, setCategoryFilter] = useState<string>('Tous')
-  const categoriesPreset = useMemo(
-    () => ['Tous', 'Chambre romantique', 'Mariage', 'Anniversaire', 'Saint-Valentin'],
-    [],
-  )
+  // Filtre par id de catégorie ('' = Tous), pour correspondre à ce qu'attend le backend
+  const [categoryFilter, setCategoryFilter] = useState<string>('')
+
+  // Tri (aligné sur le catalogue public)
+  const [sort, setSort] = useState<SortKey>('recent')
+  const [sortOpen, setSortOpen] = useState(false)
+  const sortRef = useRef<HTMLDivElement>(null)
 
   // Pagination simple (MVP UI)
   const [page, setPage] = useState(1)
@@ -44,11 +54,15 @@ export default function AdminProducts() {
   // Modal CRUD (création / édition)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  // Aperçus locaux des fichiers en cours de téléversement (avant retour des URLs Cloudinary)
+  const [pendingPreviews, setPendingPreviews] = useState<{ id: string; url: string; status: 'uploading' | 'error' }[]>([])
 
   const [form, setForm] = useState<{
     name: string
     description: string
     price: string
+    comparePrice: string
     stock: string
     category: string
     isAvailable: boolean
@@ -59,6 +73,7 @@ export default function AdminProducts() {
     name: '',
     description: '',
     price: '45000',
+    comparePrice: '',
     stock: '10',
     category: '',
     isAvailable: true,
@@ -68,10 +83,13 @@ export default function AdminProducts() {
   })
 
   const resetForm = () => {
+    setPendingPreviews((prev) => { prev.forEach((p) => URL.revokeObjectURL(p.url)); return [] })
+    setUploadError(null)
     setForm({
       name: '',
       description: '',
       price: '45000',
+      comparePrice: '',
       stock: '10',
       category: '',
       isAvailable: true,
@@ -85,8 +103,8 @@ export default function AdminProducts() {
     setLoading(true)
     setError(null)
     try {
-      const categoryParam = categoryFilter === 'Tous' ? undefined : categoryFilter
-      const res = await productsService.getAll({ category: categoryParam, page, limit })
+      const categoryParam = categoryFilter || undefined
+      const res = await productsService.getAll({ category: categoryParam, page, limit, sort })
       // productsService renvoie { data, total, page, limit, totalPages }
       // Axios: res.data est déjà le payload
       setProducts((res.data as any)?.data ?? [])
@@ -101,7 +119,20 @@ export default function AdminProducts() {
   useEffect(() => {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, categoryFilter])
+  }, [page, categoryFilter, sort])
+
+  // Ferme le menu de tri au clic extérieur ou à Échap
+  useEffect(() => {
+    if (!sortOpen) return
+    const onClick = (e: MouseEvent) => { if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSortOpen(false) }
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onClick); document.removeEventListener('keydown', onKey) }
+  }, [sortOpen])
+
+  const changeCategory = (id: string) => { setCategoryFilter(id); setPage(1) }
+  const changeSort = (key: SortKey) => { setSort(key); setPage(1); setSortOpen(false) }
 
   // Charge la liste des catégories (pour le menu déroulant du formulaire)
   useEffect(() => {
@@ -117,11 +148,14 @@ export default function AdminProducts() {
   }
 
   const openEdit = (p: Product) => {
+    setPendingPreviews((prev) => { prev.forEach((pv) => URL.revokeObjectURL(pv.url)); return [] })
+    setUploadError(null)
     setEditing(p)
     setForm({
       name: p.name,
       description: p.description ?? '',
       price: String(p.price ?? 0),
+      comparePrice: p.comparePrice ? String(p.comparePrice) : '',
       stock: String(p.stock ?? 0),
       category: (p.category as Category | undefined)?._id ?? (p.category as any)?.id ?? '',
       isAvailable: p.isAvailable,
@@ -141,6 +175,8 @@ export default function AdminProducts() {
       name: form.name,
       description: form.description,
       price: Number(form.price),
+      // Prix barré (promo) : null si vide → retire la promo
+      comparePrice: form.comparePrice.trim() ? Number(form.comparePrice) : null,
       stock: Number(form.stock),
       isAvailable: form.isAvailable,
       isFeatured: form.isFeatured,
@@ -155,6 +191,7 @@ export default function AdminProducts() {
     setLoading(true)
     setError(null)
     try {
+      const isCreate = !editing
       if (editing) {
         await productsService.updateJson(editing._id, payload)
       } else {
@@ -163,12 +200,64 @@ export default function AdminProducts() {
       setModalOpen(false)
       resetForm()
       setEditing(null)
-      await load()
+      if (isCreate) {
+        // Revient en tête de liste pour que le nouveau produit soit visible.
+        // Si page/filtre/tri changent, le useEffect recharge ; sinon on recharge ici.
+        const needsReset = page !== 1 || categoryFilter !== '' || sort !== 'recent'
+        setPage(1)
+        setCategoryFilter('')
+        setSort('recent')
+        if (!needsReset) await load()
+      } else {
+        await load()
+      }
     } catch (e: any) {
       setError(e?.response?.data?.message ?? e?.message ?? 'Erreur sauvegarde produit')
     } finally {
       setLoading(false)
     }
+  }
+
+  // — Gestion des photos (liste dérivée de form.images, séparé par retours ligne) —
+  const imageList = form.images.split(/[\n,]/).map((s) => s.trim()).filter(Boolean)
+  const setImageList = (urls: string[]) => setForm((f) => ({ ...f, images: urls.join('\n') }))
+
+  const uploading = pendingPreviews.some((p) => p.status === 'uploading')
+
+  const handleUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    setUploadError(null)
+    const arr = Array.from(files)
+    // 1) Aperçu local immédiat (avant même l'envoi)
+    const previews = arr.map((f) => ({ id: `${Date.now()}-${f.name}-${Math.random().toString(36).slice(2)}`, url: URL.createObjectURL(f), status: 'uploading' as const }))
+    setPendingPreviews((prev) => [...prev, ...previews])
+    // 2) Upload en tâche de fond → on remplace l'aperçu local par l'URL distante
+    try {
+      const { data } = await productsService.uploadImages(arr)
+      setImageList([...imageList, ...(data.urls ?? [])])
+      setPendingPreviews((prev) => prev.filter((p) => !previews.some((pv) => pv.id === p.id)))
+      previews.forEach((pv) => URL.revokeObjectURL(pv.url))
+    } catch (e: any) {
+      setUploadError(e?.response?.data?.message ?? e?.message ?? 'Échec du téléversement. Vérifiez la configuration Cloudinary du serveur.')
+      const failed = new Set(previews.map((p) => p.id))
+      setPendingPreviews((prev) => prev.map((p) => (failed.has(p.id) ? { ...p, status: 'error' as const } : p)))
+    }
+  }
+
+  const removePending = (id: string) => {
+    setPendingPreviews((prev) => {
+      const hit = prev.find((p) => p.id === id)
+      if (hit) URL.revokeObjectURL(hit.url)
+      return prev.filter((p) => p.id !== id)
+    })
+  }
+
+  const removeImage = (idx: number) => setImageList(imageList.filter((_, i) => i !== idx))
+  const makePrimary = (idx: number) => {
+    if (idx === 0) return
+    const next = [...imageList]
+    const [pic] = next.splice(idx, 1)
+    setImageList([pic, ...next])
   }
 
   const onDelete = async (p: Product) => {
@@ -216,26 +305,47 @@ export default function AdminProducts() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
-        {categoriesPreset.map((c, i) => (
-          <button
-            key={c}
-            type="button"
-            className={`chip ${i === 0 ? 'chip-active' : ''}`}
-            style={{
-              fontSize: 12.5,
-              padding: '7px 14px',
-              cursor: 'pointer',
-              background: categoryFilter === c ? 'var(--night)' : undefined,
-              color: categoryFilter === c ? '#fff' : undefined,
-              border: '1px solid var(--line)',
-              borderRadius: 'var(--r-pill)',
-            }}
-            onClick={() => setCategoryFilter(c)}
-          >
-            {c}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* Filtres catégorie (vraies catégories de l'API, filtre par id) */}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button type="button" aria-pressed={categoryFilter === ''}
+            className={`chip ${categoryFilter === '' ? 'chip-active' : ''}`}
+            style={{ fontSize: 12.5, padding: '7px 14px', cursor: 'pointer', font: 'inherit', background: categoryFilter === '' ? 'var(--night)' : undefined, color: categoryFilter === '' ? '#fff' : undefined, border: '1px solid var(--line)', borderRadius: 'var(--r-pill)' }}
+            onClick={() => changeCategory('')}>
+            Tous
           </button>
-        ))}
+          {categories.map((c) => (
+            <button key={c._id} type="button" aria-pressed={categoryFilter === c._id}
+              className={`chip ${categoryFilter === c._id ? 'chip-active' : ''}`}
+              style={{ fontSize: 12.5, padding: '7px 14px', cursor: 'pointer', font: 'inherit', background: categoryFilter === c._id ? 'var(--night)' : undefined, color: categoryFilter === c._id ? '#fff' : undefined, border: '1px solid var(--line)', borderRadius: 'var(--r-pill)' }}
+              onClick={() => changeCategory(c._id)}>
+              {c.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Tri */}
+        <div ref={sortRef} style={{ position: 'relative' }}>
+          <button type="button" onClick={() => setSortOpen((v) => !v)}
+            aria-haspopup="listbox" aria-expanded={sortOpen}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 'var(--r-pill)', border: '1px solid var(--line)', background: 'var(--paper)', cursor: 'pointer', font: 'inherit', fontSize: 13, color: 'var(--ink)' }}>
+            <Icon name="filter" size={15} /> Trier : {SORT_OPTIONS.find((o) => o.key === sort)?.label} <Icon name="chevd" size={13} />
+          </button>
+          {sortOpen && (
+            <ul role="listbox" aria-label="Trier les produits"
+              style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 30, minWidth: 200, listStyle: 'none', margin: 0, padding: 6, background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-md)', boxShadow: 'var(--sh-lg)' }}>
+              {SORT_OPTIONS.map((o) => (
+                <li key={o.key} role="option" aria-selected={sort === o.key}>
+                  <button type="button" onClick={() => changeSort(o.key)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 'var(--r-sm)', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 14, background: sort === o.key ? 'var(--coral-soft)' : 'transparent', color: sort === o.key ? 'var(--coral-deep)' : 'var(--ink)', fontWeight: sort === o.key ? 700 : 500 }}>
+                    {o.label}
+                    {sort === o.key && <Icon name="check" size={15} color="var(--coral-deep)" />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -310,10 +420,10 @@ export default function AdminProducts() {
               </span>
 
               <div style={{ display: 'flex', gap: 12, color: 'var(--muted)' }}>
-                <button type="button" onClick={() => openEdit(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+                <button type="button" onClick={() => openEdit(p)} aria-label={`Modifier le produit ${p.name}`} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
                   <Icon name="edit" size={17} />
                 </button>
-                <button type="button" onClick={() => onDelete(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+                <button type="button" onClick={() => onDelete(p)} aria-label={`Supprimer le produit ${p.name}`} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
                   <Icon name="trash" size={17} />
                 </button>
               </div>
@@ -337,6 +447,7 @@ export default function AdminProducts() {
       {modalOpen && (
         <div
           onClick={() => setModalOpen(false)}
+          role="dialog" aria-modal="true" aria-label="Produit"
           style={{
             position: 'fixed',
             inset: 0,
@@ -398,6 +509,14 @@ export default function AdminProducts() {
                   </label>
 
                   <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
+                    Prix avant promo (FCFA) <span style={{ fontWeight: 400, color: 'var(--muted-2)', fontSize: 12 }}>(optionnel)</span>
+                    <input type="number" value={form.comparePrice} onChange={(e) => setForm((f) => ({ ...f, comparePrice: e.target.value }))} className="field" placeholder="Laisser vide si pas de promo" />
+                    <span style={{ fontWeight: 400, color: 'var(--muted-2)', fontSize: 11.5 }}>
+                      Renseignez l'ancien prix (barré) pour afficher l'étiquette « Promo ».
+                    </span>
+                  </label>
+
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
                     Stock disponible
                     <input type="number" value={form.stock} onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))} className="field" />
                   </label>
@@ -438,26 +557,90 @@ export default function AdminProducts() {
               {/* — Section : Photos — */}
               <section>
                 <div className="eyebrow" style={{ marginBottom: 6 }}>Photos du produit</div>
-                <div style={{ fontSize: 12.5, color: 'var(--muted)', marginBottom: 10 }}>Une URL d'image par ligne — la 1ʳᵉ est la photo principale.</div>
-                <textarea
-                  value={form.images}
-                  onChange={(e) => setForm((f) => ({ ...f, images: e.target.value }))}
-                  className="field"
-                  rows={4}
-                  placeholder={'https://exemple.com/photo1.jpg\nhttps://exemple.com/photo2.jpg'}
-                  style={{ resize: 'vertical', fontFamily: 'var(--mono)', fontSize: 12.5, width: '100%' }}
-                />
-                {form.images.split(/[\n,]/).map((s) => s.trim()).filter(Boolean).length > 0 && (
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
-                    {form.images.split(/[\n,]/).map((s) => s.trim()).filter(Boolean).map((url, i) => (
-                      <div key={i} style={{ position: 'relative', width: 64, height: 64, borderRadius: 'var(--r-sm)', overflow: 'hidden', border: '1px solid var(--line-2)', background: 'var(--ivory-2)' }}>
-                        <img src={url} alt={`photo ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                <div style={{ fontSize: 12.5, color: 'var(--muted)', marginBottom: 10 }}>
+                  Importez une ou plusieurs photos depuis votre appareil. La 1ʳᵉ sert de photo principale.
+                </div>
+
+                {/* Zone d'import */}
+                <label
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '22px 16px', border: '1.5px dashed var(--line)', borderRadius: 'var(--r-md)', background: 'var(--ivory-2)', cursor: uploading ? 'wait' : 'pointer', textAlign: 'center' }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); handleUpload(e.dataTransfer.files) }}
+                >
+                  <Icon name={uploading ? 'spark' : 'plus'} size={22} color="var(--coral)" />
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>
+                    {uploading ? 'Téléversement en cours…' : 'Cliquez ou glissez vos photos ici'}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--muted-2)' }}>JPG, PNG, WebP — jusqu'à 10 images</div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    disabled={uploading}
+                    onChange={(e) => { handleUpload(e.target.files); e.target.value = '' }}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+
+                {uploadError && (
+                  <p role="alert" style={{ color: 'var(--coral)', fontSize: 13, marginTop: 8 }}>{uploadError}</p>
+                )}
+
+                {/* Miniatures */}
+                {(imageList.length > 0 || pendingPreviews.length > 0) && (
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
+                    {imageList.map((url, i) => (
+                      <div key={`${url}-${i}`} style={{ position: 'relative', width: 80, height: 80, borderRadius: 'var(--r-sm)', overflow: 'hidden', border: i === 0 ? '2px solid var(--coral)' : '1px solid var(--line-2)', background: 'var(--ivory-2)' }}>
+                        <img src={url} alt={`Photo ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '0.2' }} />
-                        {i === 0 && <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--coral)', color: '#fff', fontSize: 8.5, fontWeight: 700, textAlign: 'center', padding: '1px 0' }}>PRINCIPALE</span>}
+                        {i === 0 ? (
+                          <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--coral)', color: '#fff', fontSize: 8.5, fontWeight: 700, textAlign: 'center', padding: '2px 0' }}>PRINCIPALE</span>
+                        ) : (
+                          <button type="button" onClick={() => makePrimary(i)} aria-label={`Définir la photo ${i + 1} comme principale`}
+                            style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(43,20,36,.72)', color: '#fff', fontSize: 8.5, fontWeight: 700, textAlign: 'center', padding: '2px 0', border: 'none', cursor: 'pointer' }}>
+                            DÉFINIR
+                          </button>
+                        )}
+                        <button type="button" onClick={() => removeImage(i)} aria-label={`Retirer la photo ${i + 1}`}
+                          style={{ position: 'absolute', top: 3, right: 3, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'rgba(43,20,36,.72)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
+                          <Icon name="close" size={12} color="#fff" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Aperçus locaux en cours / en échec */}
+                    {pendingPreviews.map((p) => (
+                      <div key={p.id} style={{ position: 'relative', width: 80, height: 80, borderRadius: 'var(--r-sm)', overflow: 'hidden', border: '1px solid var(--line-2)', background: 'var(--ivory-2)' }}>
+                        <img src={p.url} alt="Aperçu en cours d'envoi" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: p.status === 'error' ? 0.35 : 0.7 }} />
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(43,20,36,.32)' }}>
+                          {p.status === 'uploading'
+                            ? <Icon name="spark" size={18} color="#fff" />
+                            : <Icon name="close" size={18} color="#fff" />}
+                        </div>
+                        <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: p.status === 'error' ? 'var(--coral)' : 'rgba(43,20,36,.72)', color: '#fff', fontSize: 8.5, fontWeight: 700, textAlign: 'center', padding: '2px 0' }}>
+                          {p.status === 'error' ? 'ÉCHEC' : 'ENVOI…'}
+                        </span>
+                        <button type="button" onClick={() => removePending(p.id)} aria-label="Retirer cet aperçu"
+                          style={{ position: 'absolute', top: 3, right: 3, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'rgba(43,20,36,.72)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
+                          <Icon name="close" size={12} color="#fff" />
+                        </button>
                       </div>
                     ))}
                   </div>
                 )}
+
+                {/* Saisie d'URLs (repli, pour coller des liens externes) */}
+                <details style={{ marginTop: 14 }}>
+                  <summary style={{ fontSize: 12.5, color: 'var(--muted)', cursor: 'pointer' }}>Ou coller des URLs d'images</summary>
+                  <textarea
+                    value={form.images}
+                    onChange={(e) => setForm((f) => ({ ...f, images: e.target.value }))}
+                    className="field"
+                    rows={3}
+                    placeholder={'https://exemple.com/photo1.jpg\nhttps://exemple.com/photo2.jpg'}
+                    style={{ resize: 'vertical', fontFamily: 'var(--mono)', fontSize: 12.5, width: '100%', marginTop: 8 }}
+                  />
+                </details>
               </section>
             </div>
 

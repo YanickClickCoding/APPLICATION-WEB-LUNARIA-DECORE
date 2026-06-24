@@ -38,9 +38,9 @@ export default function OrdersPage() {
           </div>
         ) : (
           <div className="card" style={{ overflow: 'hidden', boxShadow: 'var(--sh-sm)' }}>
-            {orders.map((o, i) => (
-              <div key={o._id} onClick={() => navigate(`/compte/commandes/${o._id}`)}
-                style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '18px 22px', borderBottom: i < orders.length - 1 ? '1px solid var(--line-2)' : 'none', cursor: 'pointer' }}>
+            {orders.map((o) => (
+              <button key={o._id} type="button" className="lun-row" onClick={() => navigate(`/compte/commandes/${o._id}`)}
+                aria-label={`Commande ${o.orderNumber}, ${STATUS_LABELS[o.status] ?? o.status}, ${fmt(o.total)}`}>
                 <div style={{ width: 56, height: 56, borderRadius: 'var(--r-sm)', overflow: 'hidden', flexShrink: 0, background: 'var(--ivory-2)' }}>
                   {o.items?.[0]?.image && <img src={o.items[0].image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                 </div>
@@ -52,7 +52,7 @@ export default function OrdersPage() {
                 <span className="tag" style={{ background: 'var(--ivory-2)', color: STATUS_COLORS[o.status] ?? 'var(--muted)', fontWeight: 700 }}>● {STATUS_LABELS[o.status] ?? o.status}</span>
                 <div className="display" style={{ fontSize: 22, width: 110, textAlign: 'right' }}>{fmt(o.total)}</div>
                 <Icon name="chevr" size={18} color="var(--muted)" />
-              </div>
+              </button>
             ))}
           </div>
         )}

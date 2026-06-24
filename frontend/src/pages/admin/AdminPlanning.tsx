@@ -4,6 +4,7 @@ import Icon from '@/components/ui/Icon'
 import api from '@/services/api'
 import { useToastStore } from '@/stores/useToastStore'
 import type { DecorationPlanning, PlanningStatus } from '@/types'
+import { clickable } from '@/hooks/useClickable'
 
 const fmt = (n?: number) => (n != null ? n.toLocaleString('fr-FR') + ' F' : '—')
 const fmtDate = (d?: string) => (d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—')
@@ -46,12 +47,12 @@ function QuoteModal({ planning, onClose }: { planning: DecorationPlanning; onClo
   const lbl = { fontSize: 12.5, fontWeight: 600 as const, color: 'var(--muted)', marginBottom: 6, display: 'block' }
 
   return (
-    <div onClick={(e) => e.target === e.currentTarget && onClose()}
+    <div onClick={(e) => e.target === e.currentTarget && onClose()} role="dialog" aria-modal="true" aria-label="Détail de la planification"
       style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(43,20,36,.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div className="card" style={{ width: '100%', maxWidth: 480, boxShadow: 'var(--sh-lg)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--line-2)' }}>
           <h2 className="serif" style={{ fontSize: 24, fontWeight: 600 }}>Envoyer un devis</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: 'var(--muted)' }}><Icon name="close" size={20} /></button>
+          <button onClick={onClose} aria-label="Fermer" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: 'var(--muted)' }}><Icon name="close" size={20} /></button>
         </div>
         <form onSubmit={(e) => { e.preventDefault(); send.mutate() }} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ background: 'var(--ivory)', borderRadius: 'var(--r-sm)', padding: '12px 14px', fontSize: 13.5 }}>
@@ -207,7 +208,7 @@ export default function AdminPlanning() {
         ) : rows.length === 0 ? (
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--muted)' }}>Aucune demande {statusFilter ? 'pour ce filtre' : ''}.</div>
         ) : rows.map((p, i) => (
-          <div key={p._id} onClick={() => setSelectedId(p._id)} style={{ display: 'grid', gridTemplateColumns: '140px 1.2fr 1fr 110px 130px 140px 40px', alignItems: 'center', padding: '15px 24px', borderBottom: i < rows.length - 1 ? '1px solid var(--line-2)' : 'none', fontSize: 14, cursor: 'pointer' }}>
+          <div key={p._id} {...clickable(() => setSelectedId(p._id), `Planning ${p.planningNumber}`)} style={{ display: 'grid', gridTemplateColumns: '140px 1.2fr 1fr 110px 130px 140px 40px', alignItems: 'center', padding: '15px 24px', borderBottom: i < rows.length - 1 ? '1px solid var(--line-2)' : 'none', fontSize: 14, cursor: 'pointer' }}>
             <span className="mono" style={{ fontSize: 12, color: 'var(--muted)' }}>{p.planningNumber}</span>
             <span style={{ fontWeight: 600 }}>{p.client?.firstName} {p.client?.lastName?.[0]}.</span>
             <span style={{ color: 'var(--muted)' }}>{p.eventType}</span>

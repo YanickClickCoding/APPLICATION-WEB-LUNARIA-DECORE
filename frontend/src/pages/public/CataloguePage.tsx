@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import Icon from '@/components/ui/Icon'
@@ -8,12 +8,24 @@ import type { Category } from '@/types'
 import ProductCard from '@/components/product/ProductCard'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
+type SortKey = 'popular' | 'price-asc' | 'price-desc' | 'recent'
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'popular', label: 'Populaires' },
+  { key: 'recent', label: 'Nouveautés' },
+  { key: 'price-asc', label: 'Prix croissant' },
+  { key: 'price-desc', label: 'Prix décroissant' },
+]
+
 export default function CataloguePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
+  const [sortOpen, setSortOpen] = useState(false)
+  const sortRef = useRef<HTMLDivElement>(null)
 
   const page = Number(searchParams.get('page') ?? 1)
   const categoryId = searchParams.get('category') ?? undefined
+  const sort = (searchParams.get('sort') as SortKey) ?? 'popular'
+  const sortLabel = SORT_OPTIONS.find((o) => o.key === sort)?.label ?? 'Populaires'
 
   const { data: categories } = useQuery<Category[]>({
     queryKey: ['categories'],
@@ -21,8 +33,8 @@ export default function CataloguePage() {
   })
 
   const { data, isLoading } = useQuery({
-    queryKey: ['products', { page, category: categoryId, search }],
-    queryFn: () => productsService.getAll({ page, limit: 12, category: categoryId, search: search || undefined }).then((r) => r.data),
+    queryKey: ['products', { page, category: categoryId, search, sort }],
+    queryFn: () => productsService.getAll({ page, limit: 12, category: categoryId, search: search || undefined, sort }).then((r) => r.data),
   })
 
   const setCategory = (id?: string) => {
@@ -37,6 +49,23 @@ export default function CataloguePage() {
     setSearchParams(p)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+  const setSort = (key: SortKey) => {
+    const p = new URLSearchParams(searchParams)
+    if (key === 'popular') p.delete('sort'); else p.set('sort', key)
+    p.set('page', '1')
+    setSearchParams(p)
+    setSortOpen(false)
+  }
+
+  // Ferme le menu de tri au clic extérieur ou à Échap
+  useEffect(() => {
+    if (!sortOpen) return
+    const onClick = (e: MouseEvent) => { if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSortOpen(false) }
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onClick); document.removeEventListener('keydown', onKey) }
+  }, [sortOpen])
 
   const products = data?.data ?? []
   const total = data?.total ?? 0
@@ -66,9 +95,28 @@ export default function CataloguePage() {
 
       <div className="lun-cat-bar">
         <span className="lun-cat-count">{total} résultat{total > 1 ? 's' : ''}</span>
-        <span className="lun-cat-sort">
-          <Icon name="filter" size={16} /> Trier : Populaires <Icon name="chevd" size={14} />
-        </span>
+        <div className="lun-sort" ref={sortRef} style={{ position: 'relative' }}>
+          <button type="button" className="lun-cat-sort" onClick={() => setSortOpen((v) => !v)}
+            aria-haspopup="listbox" aria-expanded={sortOpen}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: 'inherit' }}>
+            <Icon name="filter" size={16} /> Trier : {sortLabel} <Icon name="chevd" size={14} />
+          </button>
+          {sortOpen && (
+            <ul role="listbox" aria-label="Trier les produits"
+              style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 30, minWidth: 200, listStyle: 'none', margin: 0, padding: 6, background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-md)', boxShadow: 'var(--sh-lg)' }}>
+              {SORT_OPTIONS.map((o) => (
+                <li key={o.key} role="option" aria-selected={sort === o.key}>
+                  <button type="button" onClick={() => setSort(o.key)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 'var(--r-sm)', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 14,
+                      background: sort === o.key ? 'var(--coral-soft)' : 'transparent', color: sort === o.key ? 'var(--coral-deep)' : 'var(--ink)', fontWeight: sort === o.key ? 700 : 500 }}>
+                    {o.label}
+                    {sort === o.key && <Icon name="check" size={15} color="var(--coral-deep)" />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
       {/* Grille produits */}

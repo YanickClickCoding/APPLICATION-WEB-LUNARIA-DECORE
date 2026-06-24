@@ -39,12 +39,12 @@ function ServiceForm({ service, categories, onClose }: { service?: DecorationSer
   })
 
   return (
-    <div onClick={(e) => e.target === e.currentTarget && onClose()}
+    <div onClick={(e) => e.target === e.currentTarget && onClose()} role="dialog" aria-modal="true" aria-label="Service de décoration"
       style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(43,20,36,.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div className="card" style={{ width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--sh-lg)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--line-2)', position: 'sticky', top: 0, background: 'var(--paper)', borderRadius: 'var(--r-md) var(--r-md) 0 0' }}>
           <h2 className="serif" style={{ fontSize: 24, fontWeight: 600 }}>{isEdit ? 'Modifier le service' : 'Nouveau service'}</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: 'var(--muted)' }}><Icon name="close" size={20} /></button>
+          <button onClick={onClose} aria-label="Fermer" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: 'var(--muted)' }}><Icon name="close" size={20} /></button>
         </div>
         <form onSubmit={(e) => { e.preventDefault(); save.mutate() }} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div><label style={lbl}>Nom *</label><input required className="field" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Chambre Romantique Prestige" /></div>
@@ -65,13 +65,14 @@ function ServiceForm({ service, categories, onClose }: { service?: DecorationSer
             <div><label style={lbl}>Durée</label><input className="field" value={form.duration} onChange={(e) => set('duration', e.target.value)} placeholder="2h d'installation" /></div>
           </div>
           <div><label style={lbl}>Inclus (un par ligne)</label><textarea rows={4} className="field" style={{ resize: 'none' }} value={form.includes} onChange={(e) => set('includes', e.target.value)} placeholder={'20 bougies LED\nPétales de roses\nGuirlande 5m'} /></div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-            <div onClick={() => set('isFeatured', !form.isFeatured)}
-              style={{ width: 42, height: 24, borderRadius: 'var(--r-pill)', position: 'relative', transition: 'background .15s', background: form.isFeatured ? 'var(--coral)' : 'var(--line)' }}>
-              <div style={{ position: 'absolute', top: 3, left: form.isFeatured ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left .15s', boxShadow: 'var(--sh-sm)' }} />
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button type="button" role="switch" aria-checked={form.isFeatured} aria-label="Service vedette"
+              onClick={() => set('isFeatured', !form.isFeatured)}
+              style={{ width: 42, height: 24, padding: 0, border: 'none', cursor: 'pointer', borderRadius: 'var(--r-pill)', position: 'relative', transition: 'background .15s', background: form.isFeatured ? 'var(--coral)' : 'var(--line)' }}>
+              <span style={{ position: 'absolute', top: 3, left: form.isFeatured ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left .15s', boxShadow: 'var(--sh-sm)' }} />
+            </button>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--ink)' }}><Icon name="star" size={14} color="var(--gold)" fill="var(--gold)" /> Service vedette</span>
-          </label>
+          </div>
           <div style={{ display: 'flex', gap: 12, paddingTop: 4 }}>
             <button type="button" onClick={onClose} className="btn btn-ghost" style={{ flex: 1 }}>Annuler</button>
             <button type="submit" disabled={save.isPending} className="btn btn-primary" style={{ flex: 1, opacity: save.isPending ? .6 : 1 }}>

@@ -1,36 +1,39 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import Icon from '@/components/ui/Icon'
 import api from '@/services/api'
 import { useToastStore } from '@/stores/useToastStore'
 import type { DecorationPlanning, PlanningStatus } from '@/types'
+import { AccountSidebar } from './AccountPage'
 
 const EVENT_TYPES = ['Mariage', 'Anniversaire', 'Saint-Valentin', 'Baptême', 'Cérémonie', 'Autre']
 
-const STATUS_FLOW: { key: string; label: string; desc: string }[] = [
-  { key: 'EN_ATTENTE', label: 'Demande envoyée', desc: 'Détails de votre événement reçus' },
-  { key: 'DEVIS_ENVOYE', label: 'Devis proposé', desc: 'À valider de votre côté' },
-  { key: 'DEVIS_ACCEPTE', label: 'Devis accepté', desc: 'Réservation de la date' },
-  { key: 'CONFIRME', label: 'Confirmé', desc: 'Acompte & planning' },
-  { key: 'EN_COURS', label: 'En cours', desc: 'Préparation' },
-  { key: 'TERMINE', label: 'Installation', desc: 'Le jour J' },
-]
 const STATUS_LABEL: Record<PlanningStatus, string> = {
   EN_ATTENTE: 'En attente', DEVIS_ENVOYE: 'Devis reçu', DEVIS_ACCEPTE: 'Accepté', DEVIS_REFUSE: 'Refusé',
   CONFIRME: 'Confirmé', EN_COURS: 'En cours', TERMINE: 'Terminé', ANNULE: 'Annulé',
 }
+const STATUS_COLOR: Record<PlanningStatus, string> = {
+  EN_ATTENTE: 'var(--muted)', DEVIS_ENVOYE: 'var(--gold)', DEVIS_ACCEPTE: '#3b82f6', DEVIS_REFUSE: '#ef4444',
+  CONFIRME: '#8b5cf6', EN_COURS: 'var(--coral)', TERMINE: '#3ec47a', ANNULE: '#ef4444',
+}
+
+const fmt = (n?: number) => (n ?? 0).toLocaleString('fr-FR') + ' F'
+const fmtDate = (d?: string) => d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
 
 export default function PlanningPage() {
   const qc = useQueryClient()
   const toast = useToastStore()
+  const navigate = useNavigate()
+  const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ eventType: 'Mariage', eventDate: '', locationType: 'Domicile', ville: 'Cotonou', address: '', guestCount: '', budgetMin: '', budgetMax: '', description: '' })
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }))
 
-  const { data } = useQuery<{ data: DecorationPlanning[] }>({
+  const { data, isLoading } = useQuery<{ data: DecorationPlanning[] }>({
     queryKey: ['my-plannings'],
     queryFn: () => api.get('/planning').then((r) => r.data),
   })
-  const latest = data?.data?.[0]
+  const events = data?.data ?? []
 
   const submit = useMutation({
     mutationFn: () => api.post('/planning', {
@@ -41,97 +44,96 @@ export default function PlanningPage() {
       budgetMax: form.budgetMax ? Number(form.budgetMax) : undefined,
       description: form.description,
     }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['my-plannings'] }); toast.success('Demande envoyée', 'Notre équipe revient vers vous sous 48h.') },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-plannings'] })
+      toast.success('Demande envoyée', 'Notre équipe revient vers vous sous 48h.')
+      setShowForm(false)
+      setForm({ eventType: 'Mariage', eventDate: '', locationType: 'Domicile', ville: 'Cotonou', address: '', guestCount: '', budgetMin: '', budgetMax: '', description: '' })
+    },
     onError: () => toast.error('Erreur', 'Envoi impossible.'),
   })
 
-  const respond = useMutation({
-    mutationFn: (accept: boolean) => api.patch(`/planning/${latest!._id}/${accept ? 'accept' : 'reject'}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-plannings'] }),
-  })
-
   const lbl = { fontSize: 12.5, fontWeight: 600 as const, color: 'var(--muted)', marginBottom: 6, display: 'block' }
-  const currentIdx = latest ? STATUS_FLOW.findIndex((s) => s.key === latest.status) : -1
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '44px 56px 64px' }} className="lun-plan">
-      <div className="eyebrow">Décoration sur mesure</div>
-      <h1 className="display" style={{ fontSize: 50, margin: '12px 0 0' }}>Planifions votre événement</h1>
-      <p style={{ fontSize: 16, color: 'var(--muted)', maxWidth: 540, marginTop: 12, lineHeight: 1.7 }}>
-        Quelques détails suffisent. Notre équipe revient avec une proposition personnalisée et un devis sous 48h.
-      </p>
-
-      <div className="lun-plan-grid" style={{ display: 'flex', gap: 44, marginTop: 36, alignItems: 'flex-start' }}>
-        {/* Formulaire */}
-        <div style={{ flex: 1.4 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Type d'événement</div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 28 }}>
-            {EVENT_TYPES.map((c) => (
-              <span key={c} className={`chip ${form.eventType === c ? 'chip-active' : ''}`} onClick={() => set('eventType', c)}>{c}</span>
-            ))}
+    <div className="lun-acc">
+      <AccountSidebar />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+          <div>
+            <h1 className="display" style={{ fontSize: 40, margin: '0 0 6px' }}>Mes événements</h1>
+            <div style={{ fontSize: 14, color: 'var(--muted)' }}>Vos demandes de décoration sur mesure et leur suivi.</div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
-            <div><label style={lbl}>Date de l'événement</label><input type="date" className="field" style={{ colorScheme: 'light' }} value={form.eventDate} onChange={(e) => set('eventDate', e.target.value)} min={new Date().toISOString().split('T')[0]} /></div>
-            <div><label style={lbl}>Nombre d'invités</label><input type="number" className="field" value={form.guestCount} onChange={(e) => set('guestCount', e.target.value)} placeholder="80" /></div>
-            <div><label style={lbl}>Lieu / quartier</label><input className="field" value={form.address} onChange={(e) => set('address', e.target.value)} placeholder="Cocotomey, Calavi" /></div>
-            <div><label style={lbl}>Ville</label><input className="field" value={form.ville} onChange={(e) => set('ville', e.target.value)} /></div>
-            <div><label style={lbl}>Budget min (F)</label><input type="number" className="field" value={form.budgetMin} onChange={(e) => set('budgetMin', e.target.value)} placeholder="150 000" /></div>
-            <div><label style={lbl}>Budget max (F)</label><input type="number" className="field" value={form.budgetMax} onChange={(e) => set('budgetMax', e.target.value)} placeholder="250 000" /></div>
-          </div>
-          <div style={{ margin: '20px 0 6px', ...lbl }}>Décrivez votre rêve</div>
-          <textarea className="field" rows={4} style={{ resize: 'vertical' }} value={form.description} onChange={(e) => set('description', e.target.value)}
-            placeholder="Une ambiance romantique en rouge et or, avec une arche florale pour la demande en mariage…" />
-          <button onClick={() => submit.mutate()} disabled={!form.eventDate || submit.isPending} className="btn btn-primary btn-lg" style={{ marginTop: 22 }}>
-            {submit.isPending ? 'Envoi…' : <>Envoyer ma demande <Icon name="send" size={17} color="#fff" /></>}
-          </button>
-        </div>
-
-        {/* Suivi */}
-        <div style={{ flex: 1, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 'var(--r-lg)', padding: 28, boxShadow: 'var(--sh-sm)' }} className="lun-plan-track">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 className="serif" style={{ fontSize: 22, fontWeight: 600 }}>Suivi de la demande</h3>
-            {latest && <span className="tag" style={{ background: 'var(--gold-soft)', color: '#8a5a10' }}>{STATUS_LABEL[latest.status]}</span>}
-          </div>
-          {!latest ? (
-            <p style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 16 }}>Aucune demande en cours. Remplissez le formulaire pour démarrer un projet.</p>
-          ) : (
-            <>
-              <div className="mono" style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{latest.planningNumber} · {latest.eventType}</div>
-
-              {latest.status === 'DEVIS_ENVOYE' && latest.quote && (
-                <div style={{ background: 'var(--coral-soft)', borderRadius: 'var(--r-md)', padding: 16, margin: '16px 0' }}>
-                  <div style={{ fontSize: 12, color: 'var(--coral-deep)', fontWeight: 700 }}>Devis proposé</div>
-                  <div className="display" style={{ fontSize: 26, margin: '4px 0' }}>{latest.quote.amount?.toLocaleString('fr-FR')} F</div>
-                  <p style={{ fontSize: 12.5, color: 'var(--muted)', marginBottom: 12 }}>{latest.quote.description}</p>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    <button onClick={() => respond.mutate(true)} className="btn btn-primary btn-sm" style={{ flex: 1 }}>Accepter</button>
-                    <button onClick={() => respond.mutate(false)} className="btn btn-ghost btn-sm" style={{ flex: 1 }}>Refuser</button>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ marginTop: 24 }}>
-                {STATUS_FLOW.map((s, i) => {
-                  const done = i < currentIdx, active = i === currentIdx
-                  return (
-                    <div key={s.key} style={{ display: 'flex', gap: 16, paddingBottom: i < STATUS_FLOW.length - 1 ? 22 : 0, position: 'relative' }}>
-                      {i < STATUS_FLOW.length - 1 && <div style={{ position: 'absolute', left: 13, top: 26, bottom: 4, width: 2, background: done ? 'var(--coral)' : 'var(--line)' }} />}
-                      <div style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, zIndex: 1, background: done ? 'var(--coral)' : active ? 'var(--gold)' : 'var(--ivory-2)', border: done || active ? 'none' : '2px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {done ? <Icon name="check" size={15} color="#fff" /> : active ? <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} /> : null}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 14.5, fontWeight: active ? 700 : 600, color: done || active ? 'var(--ink)' : 'var(--muted-2)' }}>{s.label}</div>
-                        <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>{s.desc}</div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </>
+          {!showForm && (
+            <button onClick={() => setShowForm(true)} className="btn btn-primary">
+              <Icon name="plus" size={16} color="#fff" /> Nouvel événement
+            </button>
           )}
         </div>
+
+        {showForm && (
+          <div className="card" style={{ padding: 28, marginBottom: 28, boxShadow: 'var(--sh-sm)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <h3 className="serif" style={{ fontSize: 22, fontWeight: 600 }}>Planifions votre événement</h3>
+              <button onClick={() => setShowForm(false)} className="lun-icon-btn" aria-label="Fermer"><Icon name="close" size={18} color="var(--muted)" /></button>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Type d'événement</div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 24 }}>
+              {EVENT_TYPES.map((c) => (
+                <span key={c} className={`chip ${form.eventType === c ? 'chip-active' : ''}`} onClick={() => set('eventType', c)}>{c}</span>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+              <div><label style={lbl}>Date de l'événement</label><input type="date" className="field" style={{ colorScheme: 'light' }} value={form.eventDate} onChange={(e) => set('eventDate', e.target.value)} min={new Date().toISOString().split('T')[0]} /></div>
+              <div><label style={lbl}>Nombre d'invités</label><input type="number" className="field" value={form.guestCount} onChange={(e) => set('guestCount', e.target.value)} placeholder="80" /></div>
+              <div><label style={lbl}>Lieu / quartier</label><input className="field" value={form.address} onChange={(e) => set('address', e.target.value)} placeholder="Cocotomey, Calavi" /></div>
+              <div><label style={lbl}>Ville</label><input className="field" value={form.ville} onChange={(e) => set('ville', e.target.value)} /></div>
+              <div><label style={lbl}>Budget min (F)</label><input type="number" className="field" value={form.budgetMin} onChange={(e) => set('budgetMin', e.target.value)} placeholder="150 000" /></div>
+              <div><label style={lbl}>Budget max (F)</label><input type="number" className="field" value={form.budgetMax} onChange={(e) => set('budgetMax', e.target.value)} placeholder="250 000" /></div>
+            </div>
+            <div style={{ margin: '20px 0 6px', ...lbl }}>Décrivez votre rêve</div>
+            <textarea className="field" rows={4} style={{ resize: 'vertical' }} value={form.description} onChange={(e) => set('description', e.target.value)}
+              placeholder="Une ambiance romantique en rouge et or, avec une arche florale pour la demande en mariage…" />
+            <button onClick={() => submit.mutate()} disabled={!form.eventDate || submit.isPending} className="btn btn-primary btn-lg" style={{ marginTop: 22 }}>
+              {submit.isPending ? 'Envoi…' : <>Envoyer ma demande <Icon name="send" size={17} color="#fff" /></>}
+            </button>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div style={{ padding: 40, textAlign: 'center' }}><div style={{ width: 32, height: 32, border: '2px solid var(--line)', borderTopColor: 'var(--coral)', borderRadius: '50%', margin: '0 auto', animation: 'lun-spin .7s linear infinite' }} /></div>
+        ) : events.length === 0 ? (
+          !showForm && (
+            <div className="card" style={{ padding: 48, textAlign: 'center' }}>
+              <Icon name="cal" size={40} color="var(--line)" />
+              <p style={{ color: 'var(--muted)', margin: '14px 0 16px' }}>Aucun événement pour le moment.</p>
+              <button onClick={() => setShowForm(true)} className="btn btn-primary">Planifier un événement</button>
+            </div>
+          )
+        ) : (
+          <div className="card" style={{ overflow: 'hidden', boxShadow: 'var(--sh-sm)' }}>
+            {events.map((e) => (
+              <button key={e._id} type="button" className="lun-row" onClick={() => navigate(`/compte/planification/${e._id}`)}
+                aria-label={`Événement ${e.eventType}, ${e.planningNumber}, ${STATUS_LABEL[e.status]}`}>
+                <div style={{ width: 48, height: 48, borderRadius: 'var(--r-sm)', flexShrink: 0, background: 'var(--coral-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="cal" size={22} color="var(--coral-deep)" />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="mono" style={{ fontSize: 12, color: 'var(--muted)' }}>{e.planningNumber}</div>
+                  <div className="serif" style={{ fontSize: 19, fontWeight: 600 }}>{e.eventType}</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>
+                    {fmtDate(e.eventDate)}{e.eventLocation?.ville ? ` · ${e.eventLocation.ville}` : ''}{e.guestCount ? ` · ${e.guestCount} invités` : ''}
+                  </div>
+                </div>
+                <span className="tag" style={{ background: 'var(--ivory-2)', color: STATUS_COLOR[e.status] ?? 'var(--muted)', fontWeight: 700 }}>● {STATUS_LABEL[e.status]}</span>
+                {e.quote && <div className="display" style={{ fontSize: 20, width: 110, textAlign: 'right' }}>{fmt(e.quote.amount)}</div>}
+                <Icon name="chevr" size={18} color="var(--muted)" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-      <style>{`@media (max-width: 900px) { .lun-plan { padding: 32px 20px !important; } .lun-plan-grid { flex-direction: column !important; } .lun-plan-track { width: 100%; } }`}</style>
+      <style>{`@keyframes lun-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }

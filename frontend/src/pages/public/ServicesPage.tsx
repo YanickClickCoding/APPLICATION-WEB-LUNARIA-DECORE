@@ -6,6 +6,7 @@ import api from '@/services/api'
 import type { DecorationService } from '@/types'
 import { SERVICES as SERVICE_IMG } from '@/utils/images'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { clickable } from '@/hooks/useClickable'
 
 const fmt = (n: number) => n.toLocaleString('fr-FR') + ' F'
 
@@ -53,7 +54,7 @@ export default function ServicesPage() {
           ) : (
             <div className="lun-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
               {services.map((s, i) => (
-                <div key={s._id} onClick={() => navigate(`/service/${s.slug}`)} className="card" style={{ overflow: 'hidden', boxShadow: 'var(--sh-sm)', cursor: 'pointer' }}>
+                <div key={s._id} {...clickable(() => navigate(`/service/${s.slug}`), s.name)} className="card" style={{ overflow: 'hidden', boxShadow: 'var(--sh-sm)', cursor: 'pointer' }}>
                   <div style={{ height: 240, background: 'var(--ivory-2)', position: 'relative' }}>
                     {(s.images?.[0] ?? Object.values(SERVICE_IMG)[i]) &&
                       <img src={s.images?.[0] ?? Object.values(SERVICE_IMG)[i % 10]} alt={s.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}

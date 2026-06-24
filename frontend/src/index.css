@@ -171,8 +171,8 @@ select.field { appearance: none; -webkit-appearance: none; cursor: pointer;
 .bg-ivory-2{ background: var(--ivory-2); }
 .bg-paper  { background: var(--paper); }
 .bg-blush  { background: var(--blush); }
-.bg-night  { background: var(--surface-dark); color: #fff; }
-.bg-night-2{ background: var(--surface-dark); color: #fff; }
+.bg-night  { background: var(--night); color: #fff; }
+.bg-night-2{ background: var(--night-2); color: #fff; }
 .bg-coral  { background: var(--coral); color: #fff; }
 
 /* — En-tête de section — */

@@ -19,7 +19,7 @@ interface NavbarProps { dark?: boolean }
 export default function Navbar({ dark = false }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const { isAuthenticated, user, logout } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
   const { itemCount, openCart } = useCartStore()
   const { unreadTotal } = useChatStore()
   const navigate = useNavigate()
@@ -64,9 +64,10 @@ export default function Navbar({ dark = false }: NavbarProps) {
         <button onClick={() => navigate('/catalogue')} className="lun-icon-btn" aria-label="Rechercher">
           <Icon name="search" size={20} color={fg} />
         </button>
-        {isAuthenticated && (
+        {isAuthenticated && user?.role !== 'ADMIN' && (
           <button onClick={() => navigate('/compte/favoris')} className="lun-icon-btn lun-nav-hide" aria-label="Favoris">
             <Icon name="heart" size={20} color={fg} />
+            {(user?.favorites?.length ?? 0) > 0 && <span className="lun-badge">{user!.favorites!.length}</span>}
           </button>
         )}
         {isAuthenticated && user?.role !== 'ADMIN' && (
@@ -75,10 +76,12 @@ export default function Navbar({ dark = false }: NavbarProps) {
             {unreadTotal > 0 && <span className="lun-badge">{unreadTotal}</span>}
           </button>
         )}
-        <button onClick={openCart} className="lun-icon-btn" aria-label="Panier">
-          <Icon name="cart" size={20} color={fg} />
-          {itemCount > 0 && <span className="lun-badge">{itemCount}</span>}
-        </button>
+        {user?.role !== 'ADMIN' && (
+          <button onClick={openCart} className="lun-icon-btn" aria-label="Panier">
+            <Icon name="cart" size={20} color={fg} />
+            {itemCount > 0 && <span className="lun-badge">{itemCount}</span>}
+          </button>
+        )}
 
         <div className="lun-nav-div lun-nav-hide" style={{ background: onDark ? 'var(--line-dark)' : 'var(--line)' }} />
 
@@ -93,13 +96,14 @@ export default function Navbar({ dark = false }: NavbarProps) {
               style={{ background: onDark ? '#fff' : 'var(--night)', color: onDark ? 'var(--night)' : '#fff' }}>
               <Icon name="user" size={15} color={onDark ? 'var(--night)' : '#fff'} /> Mon compte
             </button>
-            <button onClick={() => { logout(); navigate('/') }} title="Déconnexion" className="lun-icon-btn">
-              <Icon name="logout" size={18} color={sub} />
-            </button>
           </div>
         ) : (
           <button onClick={() => navigate('/connexion')} className="btn btn-sm lun-nav-hide"
-            style={{ background: onDark ? '#fff' : 'var(--night)', color: onDark ? 'var(--night)' : '#fff' }}>
+            style={{ 
+              background: onDark ? 'transparent' : 'var(--night)', 
+              color: onDark ? '#fff' : '#fff',
+              border: onDark ? '1.5px solid rgba(255,255,255,0.4)' : '1.5px solid var(--night)'
+            }}>
             Se connecter
           </button>
         )}

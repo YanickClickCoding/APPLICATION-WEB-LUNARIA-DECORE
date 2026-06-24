@@ -44,12 +44,12 @@ function PromoForm({ onClose }: { onClose: () => void }) {
   })
 
   return (
-    <div onClick={(e) => e.target === e.currentTarget && onClose()}
+    <div onClick={(e) => e.target === e.currentTarget && onClose()} role="dialog" aria-modal="true" aria-label="Code promo"
       style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(43,20,36,.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div className="card" style={{ width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--sh-lg)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--line-2)' }}>
           <h2 className="serif" style={{ fontSize: 24, fontWeight: 600 }}>Nouveau code promo</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: 'var(--muted)' }}><Icon name="close" size={20} /></button>
+          <button onClick={onClose} aria-label="Fermer" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: 'var(--muted)' }}><Icon name="close" size={20} /></button>
         </div>
         <form onSubmit={(e) => { e.preventDefault(); save.mutate() }} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div><label style={lbl}>Code *</label><input required className="field mono" style={{ textTransform: 'uppercase', fontFamily: 'var(--mono)' }} value={form.code} onChange={(e) => set('code', e.target.value.toUpperCase())} placeholder="SAINTVALENTIN25" /></div>

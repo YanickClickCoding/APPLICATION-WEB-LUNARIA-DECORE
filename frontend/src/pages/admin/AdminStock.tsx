@@ -143,7 +143,7 @@ export default function AdminStock() {
 
       {/* Modal mouvement */}
       {modalOpen && (
-        <div onClick={() => setModalOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(43,20,36,.55)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div onClick={() => setModalOpen(false)} role="dialog" aria-modal="true" aria-label="Ajuster le stock" style={{ position: 'fixed', inset: 0, background: 'rgba(43,20,36,.55)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 460, background: 'var(--paper)', borderRadius: 'var(--r-lg)', border: '1px solid var(--line-2)', boxShadow: 'var(--sh-lg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--line-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 className="display" style={{ fontSize: 24, margin: 0 }}>Mouvement de stock</h2>

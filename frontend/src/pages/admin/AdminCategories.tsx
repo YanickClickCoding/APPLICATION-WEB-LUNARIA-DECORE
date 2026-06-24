@@ -109,15 +109,15 @@ export default function AdminCategories() {
               ● {c.isActive ? 'Active' : 'Masquée'}
             </span>
             <div style={{ display: 'flex', gap: 12, color: 'var(--muted)' }}>
-              <button type="button" onClick={() => openEdit(c)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><Icon name="edit" size={17} /></button>
-              <button type="button" onClick={() => onDelete(c)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><Icon name="trash" size={17} /></button>
+              <button type="button" onClick={() => openEdit(c)} aria-label={`Modifier la catégorie ${c.name}`} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><Icon name="edit" size={17} /></button>
+              <button type="button" onClick={() => onDelete(c)} aria-label={`Supprimer la catégorie ${c.name}`} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><Icon name="trash" size={17} /></button>
             </div>
           </div>
         ))}
       </div>
 
       {modalOpen && (
-        <div onClick={() => setModalOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(43,20,36,.55)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div onClick={() => setModalOpen(false)} role="dialog" aria-modal="true" aria-label="Catégorie" style={{ position: 'fixed', inset: 0, background: 'rgba(43,20,36,.55)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, maxHeight: '92vh', background: 'var(--paper)', borderRadius: 'var(--r-lg)', border: '1px solid var(--line-2)', boxShadow: 'var(--sh-lg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--line-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
               <h2 className="display" style={{ fontSize: 24, margin: 0 }}>{editing ? 'Modifier la catégorie' : 'Nouvelle catégorie'}</h2>
