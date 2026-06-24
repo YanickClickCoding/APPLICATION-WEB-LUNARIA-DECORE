@@ -18,7 +18,7 @@ const NAMES = [
   'Coffrets et surprises',
   'Gonflage à l’hélium et bouquets',
   'Party plates',
-  'Sacs cadeaux',
+  'Sac cadeaux',
   'Évènement (Mariage, communion, baptême)',
   'Accessoires',
   'Location',

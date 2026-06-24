@@ -103,68 +103,116 @@ const PromoCode = mongoose.model('PromoCode', PromoSchema);
 // ─── Données ─────────────────────────────────────────────────────────────
 const CATEGORIES_DATA = [
   {
-    name: 'Mariage',
-    slug: 'mariage',
-    icon: '💍',
-    image: U('1518621736915-f3b1c41bfd00'),
-    order: 1,
-    description: 'Décorations sompteuses pour le plus beau jour de votre vie',
-  },
-  {
-    name: 'Saint-Valentin',
-    slug: 'saint-valentin',
-    icon: '❤️',
-    image: U('1547592180-85f173990554'),
-    order: 2,
-    description: 'Créez une ambiance romantique inoubliable',
-  },
-  {
     name: 'Anniversaire',
     slug: 'anniversaire',
     icon: '🎂',
     image: U('1516802273409-68526ee1bdd6'),
-    order: 3,
+    order: 1,
     description: 'Fêtez chaque anniversaire avec éclat',
   },
   {
-    name: 'Fête des mères',
-    slug: 'fete-des-meres',
-    icon: '🌸',
-    image: U('1490750967868-88df5691cc3c'),
-    order: 4,
-    description: 'Honorez la femme de votre vie',
+    name: 'Baby shower',
+    slug: 'baby-shower',
+    icon: '🍼',
+    image: U('1522673607200-164d1b6ce486'),
+    order: 2,
+    description: 'Célébrez l’arrivée de bébé en douceur',
   },
   {
-    name: 'Fête des pères',
-    slug: 'fete-des-peres',
-    icon: '👑',
-    image: U('1485546246426-f4b8b59c3b3e'),
-    order: 5,
-    description: 'Surprenez le héros de la famille',
+    name: 'Bridal Shower',
+    slug: 'bridal-shower',
+    icon: '👰',
+    image: U('1519225421980-715cb0215aed'),
+    order: 3,
+    description: 'Une fête mémorable avant le grand jour',
   },
   {
-    name: 'Baptême',
-    slug: 'bapteme',
-    icon: '🕊️',
-    image: U('1519211726170-5b0aff3e9007'),
-    order: 6,
-    description: 'Un accueil tout doux pour le nouveau-né',
-  },
-  {
-    name: 'Fiançailles',
-    slug: 'fiancailles',
-    icon: '💎',
-    image: U('1464349095431-e9a21285b5f3'),
-    order: 7,
-    description: 'Préparez la plus belle surprise de votre vie',
-  },
-  {
-    name: 'Romantique',
-    slug: 'romantique',
+    name: 'Romantic',
+    slug: 'romantic',
     icon: '🕯️',
     image: U('1582657233272-66b9c5fa14a6'),
+    order: 4,
+    description: 'Décoration romantique pour vos moments à deux',
+  },
+  {
+    name: 'Noël',
+    slug: 'noel',
+    icon: '🎄',
+    image: U('1543589077-47d81606c1bf'),
+    order: 5,
+    description: 'La magie de Noël dans votre intérieur',
+  },
+  {
+    name: 'Déco chambre',
+    slug: 'deco-chambre',
+    icon: '🛏️',
+    image: U('1540518614846-7eded433c457'),
+    order: 6,
+    description: 'Transformez votre chambre en cocon',
+  },
+  {
+    name: 'Coffrets et surprises',
+    slug: 'coffrets-et-surprises',
+    icon: '🎁',
+    image: U('1549465220-1a8b9238cd48'),
+    order: 7,
+    description: 'Des cadeaux qui font toujours plaisir',
+  },
+  {
+    name: 'Gonflage à l’hélium et bouquets',
+    slug: 'gonflage-a-l-helium-et-bouquets',
+    icon: '🎈',
+    image: U('1530103862676-de8c9debad1d'),
     order: 8,
-    description: 'Décoration romantique pour vos nuits spéciales',
+    description: 'Ballons hélium et bouquets festifs',
+  },
+  {
+    name: 'Party plates',
+    slug: 'party-plates',
+    icon: '🍽️',
+    image: U('1530103862676-de8c9debad1d'),
+    order: 9,
+    description: 'Vaisselle et art de la table pour vos fêtes',
+  },
+  {
+    name: 'Sac cadeaux',
+    slug: 'sac-cadeaux',
+    icon: '🛍️',
+    image: U('1513885535751-8b9238bd345a'),
+    order: 10,
+    description: 'Sacs et emballages cadeaux soignés',
+  },
+  {
+    name: 'Évènement (Mariage, communion, baptême)',
+    slug: 'evenement-mariage-communion-bapteme',
+    icon: '💍',
+    image: U('1518621736915-f3b1c41bfd00'),
+    order: 11,
+    description: 'Décorations pour vos grands évènements',
+  },
+  {
+    name: 'Accessoires',
+    slug: 'accessoires',
+    icon: '✨',
+    image: U('1535254973040-607b474cb50d'),
+    order: 12,
+    description: 'Tous les petits plus pour sublimer vos décors',
+  },
+  {
+    name: 'Location',
+    slug: 'location',
+    icon: '📦',
+    image: U('1464366400600-7168b8af9bc3'),
+    order: 13,
+    description: 'Matériel et décors en location',
+  },
+  {
+    name: 'Fleurs synthétiques',
+    slug: 'fleurs-synthetiques',
+    icon: '🌸',
+    image: U('1490750967868-88df5691cc3c'),
+    order: 14,
+    description: 'Compositions florales artificielles durables',
   },
 ];
 
@@ -219,7 +267,7 @@ type Row = [string, string, string, number, number, string[], string[]];
 
 function rows(catSlug: string): Row[] {
   switch (catSlug) {
-    case 'mariage':
+    case 'evenement-mariage-communion-bapteme':
       return [
         ['Arche Fleurie Blanche (location)', 'Arche décorée de fleurs fraîches pour cérémonie', "Magnifiez votre cérémonie avec cette arche entièrement décorée de fleurs blanches et de verdure. Location à la journée, installation et reprise incluses.", 45000, 0, IMG.mariage, ['arche', 'fleurs', 'cérémonie']],
         ['Centre de Table Floral Mariage', 'Composition florale pour table de réception', "Élégant centre de table avec roses blanches, eucalyptus et boutons d'or. Composition fraîche préparée le jour J. Prix à la pièce.", 15000, 20000, IMG.table, ['centre de table', 'floral', 'roses']],
@@ -232,7 +280,7 @@ function rows(catSlug: string): Row[] {
         ['Tapis de Cérémonie Blanc 10m', 'Allée nuptiale en moquette événementielle', 'Tapis d\'allée blanc de 10 mètres pour l\'entrée de la mariée. Moquette événementielle antidérapante, pose incluse en zone Cotonou.', 28000, 35000, IMG.mariage, ['tapis', 'allée', 'cérémonie']],
         ['Lanternes Décoratives Dorées (lot de 4)', 'Lanternes métal et verre pour allée ou tables', 'Lot de 4 lanternes en métal doré et verre, hauteurs assorties. Accueillent une bougie LED pour baliser l\'allée ou décorer les tables.', 16000, 0, IMG.guirlandes, ['lanterne', 'dorée', 'allée']],
       ];
-    case 'saint-valentin':
+    case 'romantic':
       return [
         ['Pétales de Roses Rouges (500g)', 'Vraies pétales de roses séchées, rouge intense', 'Créez un chemin de roses ou décorez votre lit avec ces véritables pétales de roses rouges. 500g de pétales séchés premium pour une décoration inoubliable.', 4000, 5500, IMG.roses, ['roses', 'pétales', 'romantique']],
         ['Ballon Cœur Géant Rouge 90cm', 'Ballon en forme de cœur XXL, qualité premium', "Un cœur géant pour une déclaration d'amour spectaculaire ! Ballon en latex de 90cm, parfait pour la Saint-Valentin et les demandes en mariage.", 3000, 0, IMG.coeur, ['ballon', 'coeur', 'déclaration']],
@@ -258,7 +306,7 @@ function rows(catSlug: string): Row[] {
         ['Set Vaisselle Jetable Premium', 'Assiettes, gobelets, serviettes assortis (x24)', 'Set complet pour 24 personnes : assiettes, gobelets et serviettes assortis aux couleurs de la fête. Carton épais qualité premium.', 9000, 11000, IMG.table, ['vaisselle', 'jetable', 'premium']],
         ['Photobooth Complet à Cadre', 'Cadre géant + accessoires pour photos', 'Cadre photobooth géant doré + 15 accessoires rigolos. Animez la fête et repartez avec des souvenirs photo inoubliables.', 12000, 0, IMG.fete, ['photobooth', 'cadre', 'animation']],
       ];
-    case 'fete-des-meres':
+    case 'fleurs-synthetiques':
       return [
         ['Bouquet de 30 Roses Roses', 'Roses fraîches premium, emballage élégant', 'Magnifique bouquet de 30 roses fraîches rose tendre. Emballage cadeau avec ruban satin et carte message personnalisée. Disponible le jour J.', 18000, 22000, IMG.roses, ['roses', 'bouquet', 'fleurs']],
         ['Coffret "Merci Maman"', 'Bougie, fleurs séchées et carte douceur', 'Coffret cadeau garni d\'une bougie parfumée, d\'un bouquet de fleurs séchées et d\'une carte personnalisée. Une attention pleine de tendresse.', 14000, 17000, IMG.divers, ['coffret', 'maman', 'cadeau']],
@@ -271,7 +319,7 @@ function rows(catSlug: string): Row[] {
         ['Set Spa "Détente Maman"', 'Bougie, sels et accessoires bien-être', 'Set bien-être : bougie parfumée, sels de bain, et accessoires détente présentés dans un panier garni. Offrez un moment de pure détente.', 17000, 21000, IMG.divers, ['spa', 'détente', 'bien-être']],
         ['Guirlande Photos Lumineuse', 'Guirlande LED avec pinces à photos', 'Guirlande LED de 3m avec 20 mini-pinces pour accrocher vos plus belles photos de famille. Un cadeau souvenir lumineux et émouvant.', 5500, 0, IMG.guirlandes, ['guirlande', 'photos', 'led']],
       ];
-    case 'fete-des-peres':
+    case 'coffrets-et-surprises':
       return [
         ['Coffret Whisky & Verres', 'Set de 2 verres à whisky avec pierres', 'Coffret cadeau avec 2 verres à whisky en cristal et pierres à whisky réutilisables. Présenté dans une boîte bois élégante.', 19000, 24000, IMG.pere, ['whisky', 'verres', 'coffret']],
         ['Box "Super Papa" Personnalisée', 'Coffret garni personnalisable', 'Coffret cadeau personnalisable "Super Papa" : mug, carte, et emplacements pour vos petites attentions. Le cadeau qui touche en plein cœur.', 13000, 16000, IMG.pere, ['papa', 'coffret', 'personnalisé']],
@@ -284,7 +332,7 @@ function rows(catSlug: string): Row[] {
         ['Décoration de Table "Papa"', 'Set complet pour un repas en son honneur', 'Set de décoration de table pour un repas en l\'honneur de papa : chemin de table, marque-places, centre de table et bougies.', 11000, 0, IMG.table, ['table', 'décoration', 'repas']],
         ['Guirlande Photos Souvenirs', 'Guirlande LED avec pinces photos', 'Guirlande LED de 3m avec pinces pour accrocher vos souvenirs père-enfant. Un cadeau lumineux qui raconte votre histoire.', 5500, 0, IMG.guirlandes, ['guirlande', 'photos', 'souvenirs']],
       ];
-    case 'bapteme':
+    case 'baby-shower':
       return [
         ['Kit Décoration Baptême Pastel', 'Ballons, organza et guirlandes pastel', "Kit complet pour un baptême, en bleu (garçon) ou rose (fille) : ballons, guirlandes, organza, chemin de table et porte-bougies.", 15000, 0, IMG.bapteme, ['baptême', 'kit', 'pastel']],
         ['Arche de Ballons Bébé', 'Arche pastel pour l\'entrée ou le buffet', 'Arche de ballons de 2m en dégradé pastel, façon nuage. Accueille les invités ou habille la table du buffet. Montage inclus.', 16000, 20000, IMG.bapteme, ['arche', 'ballons', 'bébé']],
@@ -297,7 +345,7 @@ function rows(catSlug: string): Row[] {
         ['Bougies LED Pastel (x10)', 'Bougies douces sans danger pour bébé', 'Lot de 10 bougies LED aux teintes pastel, à flamme vacillante et sans danger. Parfaites autour des plus petits.', 4000, 5000, IMG.bougies, ['bougies', 'led', 'pastel']],
         ['Marque-Places Personnalisés (x20)', 'Étiquettes prénoms pour les invités', 'Lot de 20 marque-places personnalisés aux prénoms des invités, design pastel assorti au baptême. Touche raffinée pour les tables.', 6000, 0, IMG.bapteme, ['marque-places', 'personnalisé', 'invités']],
       ];
-    case 'fiancailles':
+    case 'bridal-shower':
       return [
         ['Coffret "Oui Je le veux"', 'Bougies, pétales et photophores réunis', 'Coffret pour la demande parfaite : 6 bougies parfumées, 200g de pétales rouges, 4 photophores dorés, guirlande 3m et tapis moelleux.', 35000, 42000, IMG.roses, ['demande', 'romantique', 'coffret']],
         ['Lettres Lumineuses "MARRY ME"', 'Mot lumineux pour la grande question', 'Lettres lumineuses "MARRY ME" en LED blanc chaud. Le décor incontournable pour poser LA question de façon spectaculaire.', 18000, 0, IMG.guirlandes, ['marry me', 'led', 'demande']],
@@ -310,7 +358,7 @@ function rows(catSlug: string): Row[] {
         ['Coffret Roses Éternelles', 'Roses stabilisées en écrin de luxe', 'Roses rouges stabilisées (durables 2-3 ans) présentées dans un écrin de luxe en forme de cœur. Le symbole d\'un amour qui dure.', 24000, 29000, IMG.roses, ['roses', 'éternelles', 'écrin']],
         ['Mise en Scène Photo Souvenir', 'Décor complet + accessoires photos', 'Décor de mise en scène complet pour vos photos de fiançailles : panneau personnalisé, guirlandes et accessoires assortis.', 20000, 0, IMG.fete, ['photo', 'mise en scène', 'souvenir']],
       ];
-    case 'romantique':
+    case 'deco-chambre':
     default:
       return [
         ['Kit Bougies LED Romantiques (10)', 'Bougies à flamme vacillante, sans danger', 'Kit de 10 bougies LED à flamme vacillante ultra-réaliste, à piles. Créez une atmosphère envoûtante sans risque d\'incendie.', 3500, 5000, IMG.bougies, ['bougies', 'led', 'romantique']],
@@ -400,7 +448,7 @@ async function seed() {
       basePrice: 25000,
       priceNote: 'À partir de 25 000 FCFA',
       images: [U('1582657233272-66b9c5fa14a6'), U('1547592180-85f173990554')],
-      category: catMap['romantique'],
+      category: catMap['deco-chambre'],
       includes: [
         '20 bougies LED vacillantes',
         'Pétales de roses (300g)',
@@ -429,7 +477,7 @@ async function seed() {
         U('1582657233272-66b9c5fa14a6'),
         U('1519657338903-65af98c59b8b'),
       ],
-      category: catMap['romantique'],
+      category: catMap['deco-chambre'],
       includes: [
         '40 bougies naturelles parfumées',
         'Bouquet de 20 roses fraîches',
@@ -462,7 +510,7 @@ async function seed() {
         U('1523438885200-e635ba2c371e'),
         U('1414235077428-338140e4d29b'),
       ],
-      category: catMap['mariage'],
+      category: catMap['evenement-mariage-communion-bapteme'],
       includes: [
         'Arche florale blanche',
         'Chemin de fleurs (5m)',
@@ -523,7 +571,7 @@ async function seed() {
         U('1519741497674-611481863552'),
         U('1607346704353-a82cec7b6fce'),
       ],
-      category: catMap['saint-valentin'],
+      category: catMap['romantic'],
       includes: [
         '30 bougies LED + 5 vraies bougies',
         'Pétales de roses rouges (500g)',
@@ -549,7 +597,7 @@ async function seed() {
       basePrice: 30000,
       priceNote: 'Pour 15 à 30 invités',
       images: [U('1519211726170-5b0aff3e9007')],
-      category: catMap['bapteme'],
+      category: catMap['baby-shower'],
       includes: [
         '30 ballons pastel',
         "Arche ballons porte d'entrée",
@@ -578,7 +626,7 @@ async function seed() {
         U('1519657338903-65af98c59b8b'),
         U('1510812431401-41d2bd2722f3'),
       ],
-      category: catMap['fiancailles'],
+      category: catMap['bridal-shower'],
       includes: [
         '50 bougies LED + 10 vraies',
         'Chemin de pétales rouges',

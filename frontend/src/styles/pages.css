@@ -438,7 +438,7 @@
 }
 
 /* ═══════════════════ FOOTER ═══════════════════ */
-.lun-footer { background: var(--night); color: #fff; padding: 64px var(--gutter) 36px; }
+.lun-footer { background: #2b1424; color: #fff; padding: 64px var(--gutter) 36px; }
 .lun-footer-top { display: flex; justify-content: space-between; gap: 60px; flex-wrap: wrap; }
 .lun-footer-about { max-width: 300px; }
 .lun-footer-desc { margin-top: 18px; font-size: 14px; color: rgba(255,255,255,.6); line-height: 1.7; }
