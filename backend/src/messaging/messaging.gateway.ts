@@ -60,6 +60,12 @@ export class MessagingGateway
     // 1) Diffuser le message à la fenêtre de chat ouverte (membres de la room)
     this.server.to(conversationId).emit('new_message', message);
 
+    // 1b) Si c'est un client qui écrit, diffuser aussi à TOUS les admins (room globale)
+    //     pour un affichage temps réel même si la conversation n'est pas ouverte.
+    if (senderRole !== 'ADMIN') {
+      this.server.to('admins').emit('new_message', message);
+    }
+
     // 2) Notification globale (pastille) au(x) destinataire(s)
     const notif = {
       conversationId,
@@ -94,7 +100,18 @@ export class MessagingGateway
         this.connectedUsers.set(payload.sub, new Set());
       }
       this.connectedUsers.get(payload.sub)!.add(client.id);
-      if (payload.role === 'ADMIN') this.adminUsers.add(payload.sub);
+      if (payload.role === 'ADMIN') {
+        const firstAdmin = this.adminUsers.size === 0;
+        this.adminUsers.add(payload.sub);
+        // Tout admin rejoint une room globale → reçoit TOUS les messages clients
+        // sans avoir à ouvrir chaque conversation (supprime le besoin de polling).
+        await client.join('admins');
+        // Si c'est le 1er admin en ligne, prévenir les clients (présence support)
+        if (firstAdmin) this.server.emit('support_presence', { online: true });
+      } else {
+        // Informer le nouveau client de l'état de présence du support
+        client.emit('support_presence', { online: this.adminUsers.size > 0 });
+      }
 
       // présence : l'utilisateur vient de se connecter
       this.emitUserPresenceForAdmins(payload.sub, true);
@@ -109,10 +126,15 @@ export class MessagingGateway
       sockets?.delete(client.id);
       if (sockets?.size === 0) {
         this.connectedUsers.delete(client.userId);
-        this.adminUsers.delete(client.userId);
+        const wasAdmin = this.adminUsers.delete(client.userId);
 
         // présence : l'utilisateur est offline
         this.emitUserPresenceForAdmins(client.userId, false);
+
+        // Plus aucun admin en ligne → prévenir les clients (support hors ligne)
+        if (wasAdmin && this.adminUsers.size === 0) {
+          this.server.emit('support_presence', { online: false });
+        }
       }
     }
   }
@@ -218,6 +240,12 @@ export class MessagingGateway
   @SubscribeMessage('get_online_users')
   getOnlineUsers() {
     return Array.from(this.connectedUsers.keys());
+  }
+
+  // Présence du support (au moins un admin en ligne) — pour l'indicateur client
+  @SubscribeMessage('get_support_presence')
+  getSupportPresence() {
+    return { online: this.adminUsers.size > 0 };
   }
 
   // ─── Helpers ──────────────────────────────────────────────────

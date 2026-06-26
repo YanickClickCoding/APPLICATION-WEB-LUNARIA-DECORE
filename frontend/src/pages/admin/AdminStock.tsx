@@ -105,7 +105,7 @@ export default function AdminStock() {
       )}
 
       {/* Inventaire produits */}
-      <div style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: 28 }}>
+      <div className="lun-table" style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: 28 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2.4fr 1fr 1fr 130px', padding: '14px 24px', fontSize: 11.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--line-2)' }}>
           <span>Produit</span><span>Stock</span><span>Seuil</span><span></span>
         </div>
@@ -125,7 +125,7 @@ export default function AdminStock() {
 
       {/* Historique des mouvements */}
       <h2 className="display" style={{ fontSize: 22, margin: '0 0 14px' }}>Historique des mouvements</h2>
-      <div style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+      <div className="lun-table" style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1.5fr', padding: '14px 24px', fontSize: 11.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--line-2)' }}>
           <span>Produit</span><span>Type</span><span>Qté</span><span>Stock après</span><span>Date</span>
         </div>

@@ -43,3 +43,8 @@ export class Conversation {
 export const ConversationSchema = SchemaFactory.createForClass(Conversation);
 ConversationSchema.index({ client: 1, updatedAt: -1 });
 ConversationSchema.index({ updatedAt: -1 });
+// Une seule conversation active par client (garantit l'unicité même en cas de race)
+ConversationSchema.index(
+  { client: 1 },
+  { unique: true, partialFilterExpression: { isArchived: false } },
+);

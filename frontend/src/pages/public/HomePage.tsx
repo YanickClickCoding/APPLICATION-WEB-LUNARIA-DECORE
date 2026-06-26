@@ -7,26 +7,36 @@ import Icon from '@/components/ui/Icon'
 import Moon from '@/components/ui/Moon'
 import Stars from '@/components/ui/Stars'
 import WhatsAppFab from '@/components/ui/WhatsAppFab'
+import ProductCard from '@/components/product/ProductCard'
 import { productsService } from '@/services/products.service'
-import { useCartStore } from '@/stores/useCartStore'
+import api from '@/services/api'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useFavorites } from '@/hooks/useFavorites'
-import { clickable } from '@/hooks/useClickable'
 import { CATEGORIES, SERVICES, AVATARS } from '@/utils/images'
-import type { Product } from '@/types'
+import type { Product, Category } from '@/types'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const fmt = (n: number) => n.toLocaleString('fr-FR') + ' F'
-
-const CATS: [string, string, string][] = [
-  ['Chambre romantique', 'Romantique', CATEGORIES.romantique],
-  ['Mariage', 'Mariage', CATEGORIES.mariage],
-  ['Anniversaire', 'Anniversaire', CATEGORIES.anniversaire],
-  ['Saint-Valentin', 'Saint-Valentin', CATEGORIES.valentine],
-  ['Baptême', 'Baptême', CATEGORIES.bapteme],
-  ['Cérémonies', 'Mariage', CATEGORIES.ceremonie],
-]
+// Image d'illustration par catégorie (slug). Fallback générique si absent.
+const CAT_IMAGE: Record<string, string> = {
+  romantique: CATEGORIES.romantique,
+  evenement: CATEGORIES.mariage,
+  anniversaire: CATEGORIES.anniversaire,
+  'baby-shower': CATEGORIES.bapteme,
+  'bridal-shower': CATEGORIES.ceremonie,
+  noel: CATEGORIES.valentine,
+  'deco-chambre': CATEGORIES.romantique,
+  'coffrets-et-surprises': CATEGORIES.anniversaire,
+  'gonflage-helium-bouquets': CATEGORIES.anniversaire,
+  'party-plates': CATEGORIES.anniversaire,
+  'sac-cadeaux': CATEGORIES.anniversaire,
+  accessoires: CATEGORIES.romantique,
+  location: CATEGORIES.ceremonie,
+  'fleurs-synthetiques': CATEGORIES.ceremonie,
+  'fete-des-meres': CATEGORIES.valentine,
+  'fete-des-peres': CATEGORIES.mariage,
+}
+const catImage = (slug: string) => CAT_IMAGE[slug] ?? CATEGORIES.romantique
 
 const STEPS: [string, string, string][] = [
   ['send', 'Décrivez votre projet', 'Date, lieu, budget, inspirations — en 2 minutes via notre formulaire de planification.'],
@@ -42,15 +52,21 @@ const TESTIMONIALS: [string, string, string, string][] = [
 
 export default function HomePage() {
   const navigate = useNavigate()
-  const { isAuthenticated, user } = useAuthStore()
-  const isAdmin = user?.role === 'ADMIN'
-  const { addProduct } = useCartStore()
-  const { isFavorite, toggle } = useFavorites()
+  const { isAuthenticated } = useAuthStore()
+  // Appelé pour purger les favoris orphelins au montage (badge cohérent)
+  useFavorites()
 
   const { data: featured } = useQuery({
     queryKey: ['products', 'featured'],
     queryFn: () => productsService.getFeatured().then((r) => r.data),
   })
+
+  // Catégories réelles (familles) pour la section « Par occasion »
+  const { data: categories } = useQuery<Category[]>({
+    queryKey: ['categories'],
+    queryFn: () => api.get<Category[]>('/categories').then((r) => r.data),
+  })
+  const occasions = (categories ?? []).slice(0, 6)
 
   // Animations d'entrée + reveal au scroll
   useEffect(() => {
@@ -67,7 +83,7 @@ export default function HomePage() {
     return () => ctx.revert()
   }, [featured])
 
-  const feats: Product[] = (featured ?? []).slice(0, 3)
+  const feats: Product[] = (featured ?? []).slice(0, 4)
 
   return (
     <div className="lun-home">
@@ -132,10 +148,10 @@ export default function HomePage() {
             <Link to="/catalogue" className="link-inline">Tout voir <Icon name="arrowsm" size={16} color="var(--coral)" /></Link>
           </div>
           <div className="grid grid-3 lun-cat-grid">
-            {CATS.map(([label, occ, img]) => (
-              <Link key={label} to={`/catalogue?occasion=${occ}`} className="tile lun-cat-tile">
-                <img src={img} alt={label} />
-                <div className="tile-overlay"><span className="tile-label">{label}</span></div>
+            {occasions.map((c) => (
+              <Link key={c._id} to={`/catalogue?category=${c._id}`} className="tile lun-cat-tile">
+                <img src={catImage(c.slug)} alt={c.name} />
+                <div className="tile-overlay"><span className="tile-label">{c.name}</span></div>
               </Link>
             ))}
           </div>
@@ -147,34 +163,9 @@ export default function HomePage() {
         <div className="bg-ivory section-sm reveal-sec" style={{ paddingTop: 0 }}>
           <div className="container">
             <div className="eyebrow" style={{ marginBottom: 28 }}>Nos créations phares</div>
-            <div className="grid grid-3 lun-feat-grid">
+            <div className="grid grid-4" style={{ gap: 22 }}>
               {feats.map((p) => (
-                <div key={p._id} {...clickable(() => navigate(`/produit/${p.slug}`), p.name)} className="card lun-feat-card">
-                  <div className="lun-feat-media">
-                    {p.images?.[0] && <img src={p.images[0]} alt={p.name} />}
-                    {!isAdmin && (
-                      <button type="button" className="lun-feat-fav" aria-label={isFavorite(p._id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-                        onClick={(e) => { e.stopPropagation(); toggle(p._id) }}>
-                        <Icon name="heart" size={14} color="var(--coral)" fill={isFavorite(p._id) ? 'var(--coral)' : 'none'} />
-                      </button>
-                    )}
-                  </div>
-                  <div className="lun-feat-body">
-                    <div className="lun-feat-head">
-                      <div>
-                        <div className="serif lun-feat-name">{p.name}</div>
-                        <div className="lun-feat-cat">{typeof p.category === 'object' ? p.category?.name : ''}</div>
-                      </div>
-                      <Stars value={p.ratings?.average ?? 5} size={13} />
-                    </div>
-                    <div className="lun-feat-foot">
-                      <span className="display lun-feat-price">{fmt(p.price)}</span>
-                      {!isAdmin && (
-                        <button onClick={(e) => { e.stopPropagation(); addProduct(p) }} className="btn btn-primary btn-sm">Ajouter <Icon name="plus" size={15} color="#fff" /></button>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <ProductCard key={p._id} product={p} />
               ))}
             </div>
           </div>
@@ -188,13 +179,16 @@ export default function HomePage() {
             <div className="eyebrow">Simple, du devis au jour J</div>
             <h2 className="display sec-title">Comment ça marche</h2>
           </div>
-          <div className="grid grid-3 lun-steps">
+          <div className="lun-timeline">
+            <div className="lun-timeline-line" aria-hidden="true" />
             {STEPS.map(([ic, t, d], i) => (
-              <div key={t} className="lun-step">
-                <span className="lun-step-num">{i + 1}</span>
-                <span className="lun-step-ico"><Icon name={ic} size={24} color="var(--coral)" /></span>
-                <div className="serif lun-step-title">{t}</div>
-                <p className="lun-step-desc">{d}</p>
+              <div key={t} className="lun-tl-step">
+                <div className="lun-tl-node">
+                  <span className="lun-tl-ico"><Icon name={ic} size={22} color="#fff" /></span>
+                  <span className="lun-tl-num">{i + 1}</span>
+                </div>
+                <div className="serif lun-tl-title">{t}</div>
+                <p className="lun-tl-desc">{d}</p>
               </div>
             ))}
           </div>

@@ -5,10 +5,10 @@ import { CONTACT } from '@/utils/contact'
 
 const COLS: [string, { label: string; to: string }[]][] = [
   ['Boutique', [
-    { label: 'Chambre romantique', to: '/catalogue?occasion=Romantique' },
-    { label: 'Mariage', to: '/catalogue?occasion=Mariage' },
-    { label: 'Anniversaire', to: '/catalogue?occasion=Anniversaire' },
-    { label: 'Saint-Valentin', to: '/catalogue?occasion=Saint-Valentin' },
+    { label: 'Romantique', to: '/catalogue?category=romantique' },
+    { label: 'Évènement', to: '/catalogue?category=evenement' },
+    { label: 'Anniversaire', to: '/catalogue?category=anniversaire' },
+    { label: 'Déco chambre', to: '/catalogue?category=deco-chambre' },
   ]],
   ['Services', [
     { label: 'Décoration sur mesure', to: '/services' },
@@ -18,9 +18,9 @@ const COLS: [string, { label: string; to: string }[]][] = [
   ]],
   ['Aide', [
     { label: 'Suivi de commande', to: '/compte/commandes' },
-    { label: 'Livraison & retrait', to: '/a-propos' },
-    { label: 'FAQ', to: '/a-propos' },
-    { label: 'Nous contacter', to: '/compte/messages' },
+    { label: 'Livraison & retrait', to: '/faq' },
+    { label: 'FAQ', to: '/faq' },
+    { label: 'Nous contacter', to: '/contact' },
   ]],
 ]
 

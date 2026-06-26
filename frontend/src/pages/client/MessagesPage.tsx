@@ -14,10 +14,22 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
   const [typing, setTyping] = useState(false)
+  const [supportOnline, setSupportOnline] = useState(false)
+  // ids des messages en échec d'envoi (pour proposer « réessayer »)
+  const [failed, setFailed] = useState<Record<string, string>>({}) // tempId → content
   const bottomRef = useRef<HTMLDivElement>(null)
+  const threadRef = useRef<HTMLDivElement>(null)
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const scrollDown = () => setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 60)
+  const isNearBottom = () => {
+    const el = threadRef.current
+    if (!el) return true
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 120
+  }
+  const scrollDown = (force = false) => {
+    if (!force && !isNearBottom()) return
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 60)
+  }
 
   // Récupère / crée la conversation support du client + ses messages
   useEffect(() => {
@@ -58,17 +70,67 @@ export default function MessagesPage() {
     const onSeen = () => {
       api.get<{ data: Message[] }>(`/conversations/${conv._id}/messages`).then((r) => setMessages(r.data.data)).catch(() => {})
     }
+    // Présence du support (au moins un admin en ligne)
+    const onSupport = (d: { online: boolean }) => setSupportOnline(!!d?.online)
+    // Re-rejoint la room + redemande la présence à chaque (re)connexion
+    const onConnect = () => {
+      socket.emit('join_conversation', { conversationId: conv._id })
+      socket.emit('get_support_presence', (d: { online: boolean }) => setSupportOnline(!!d?.online))
+    }
+    // Demande initiale de présence
+    socket.emit('get_support_presence', (d: { online: boolean }) => setSupportOnline(!!d?.online))
+
+    socket.on('connect', onConnect)
+    socket.on('support_presence', onSupport)
     socket.on('new_message', onNew)
     socket.on('user_typing', onTyping)
     socket.on('message_seen', onSeen)
-    return () => { socket.off('new_message', onNew); socket.off('user_typing', onTyping); socket.off('message_seen', onSeen) }
+    return () => {
+      socket.off('connect', onConnect)
+      socket.off('support_presence', onSupport)
+      socket.off('new_message', onNew)
+      socket.off('user_typing', onTyping)
+      socket.off('message_seen', onSeen)
+    }
   }, [socket, conv])
+
+  // Envoi d'un contenu (avec un tempId donné, pour pouvoir réessayer un échec)
+  const deliver = (content: string, tempId: string) => {
+    if (!conv) return
+    setFailed((f) => { const n = { ...f }; delete n[tempId]; return n })
+
+    const reconcile = (msg?: Message | null) => {
+      if (!msg || !msg._id) return
+      setMessages((prev) => {
+        const withoutTemp = prev.filter((m) => m._id !== tempId)
+        return withoutTemp.some((m) => m._id === msg._id) ? withoutTemp : [...withoutTemp, msg]
+      })
+    }
+    const onFail = () => setFailed((f) => ({ ...f, [tempId]: content }))
+
+    const sendViaRest = () => {
+      api.post<Message>(`/conversations/${conv._id}/messages`, { content, type: 'TEXT' })
+        .then((r) => reconcile(r.data))
+        .catch(onFail)
+    }
+
+    if (socket?.connected) {
+      let done = false
+      socket.emit('send_message', { conversationId: conv._id, content }, (msg: Message) => {
+        if (done) return
+        done = true
+        if (msg && msg._id) reconcile(msg); else onFail()
+      })
+      setTimeout(() => { if (!done) { done = true; sendViaRest() } }, 4000)
+    } else {
+      sendViaRest()
+    }
+  }
 
   const send = () => {
     if (!text.trim() || !conv) return
     const content = text.trim()
     setText('')
-    // 1) Affichage OPTIMISTE immédiat (le message apparaît tout de suite)
     const tempId = 'temp-' + Date.now()
     const optimistic = {
       _id: tempId,
@@ -81,16 +143,14 @@ export default function MessagesPage() {
       createdAt: new Date().toISOString(),
     } as unknown as Message
     setMessages((prev) => [...prev, optimistic])
-    scrollDown()
-    // 2) Envoi via socket ; l'ack remplace le message temporaire par le vrai
-    socket?.emit('send_message', { conversationId: conv._id, content }, (msg: Message) => {
-      if (msg && msg._id) {
-        setMessages((prev) => {
-          const withoutTemp = prev.filter((m) => m._id !== tempId)
-          return withoutTemp.some((m) => m._id === msg._id) ? withoutTemp : [...withoutTemp, msg]
-        })
-      }
-    })
+    scrollDown(true)
+    deliver(content, tempId)
+  }
+
+  // Réessaye un message en échec
+  const retry = (tempId: string) => {
+    const content = failed[tempId]
+    if (content) deliver(content, tempId)
   }
 
   const onType = () => {
@@ -116,14 +176,15 @@ export default function MessagesPage() {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 15, fontWeight: 700 }}>{agentName}</div>
-            <div style={{ fontSize: 12.5, color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3ec47a' }} /> En ligne · répond en ~5 min
+            <div style={{ fontSize: 12.5, color: supportOnline ? '#2c9c5e' : 'var(--muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: supportOnline ? '#3ec47a' : 'var(--muted-2)' }} />
+              {supportOnline ? 'En ligne · réponse rapide' : 'Hors ligne · nous répondrons dès que possible'}
             </div>
           </div>
         </div>
 
         {/* Fil */}
-        <div style={{ flex: 1, padding: '22px 20px', display: 'flex', flexDirection: 'column', gap: 12, background: 'var(--ivory)', overflowY: 'auto' }}>
+        <div ref={threadRef} style={{ flex: 1, padding: '22px 20px', display: 'flex', flexDirection: 'column', gap: 12, background: 'var(--ivory)', overflowY: 'auto' }}>
           {messages.length === 0 && (
             <div style={{ textAlign: 'center', color: 'var(--muted-2)', fontSize: 13.5, margin: 'auto' }}>
               Envoyez un message, notre équipe vous répond rapidement ✨
@@ -141,8 +202,18 @@ export default function MessagesPage() {
                   padding: '11px 15px', fontSize: 14.5, lineHeight: 1.5, boxShadow: 'var(--sh-sm)' }}>
                   {m.content}
                 </div>
-                <div style={{ fontSize: 10.5, color: 'var(--muted-2)', marginTop: 3, textAlign: mine ? 'right' : 'left', display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', gap: 6 }}>
+                <div style={{ fontSize: 10.5, color: 'var(--muted-2)', marginTop: 3, textAlign: mine ? 'right' : 'left', display: 'flex', alignItems: 'center', justifyContent: mine ? 'flex-end' : 'flex-start', gap: 6 }}>
                   {mine && (() => {
+                    const isTemp = String(m._id).startsWith('temp-')
+                    if (failed[m._id]) {
+                      return (
+                        <span style={{ color: 'var(--coral-deep)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          Échec
+                          <button type="button" onClick={() => retry(m._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--coral)', fontWeight: 700, textDecoration: 'underline', padding: 0, fontSize: 10.5 }}>Réessayer</button>
+                        </span>
+                      )
+                    }
+                    if (isTemp) return <span style={{ color: 'var(--muted-2)', fontWeight: 700 }}>Envoi…</span>
                     const seen = m.readBy?.some((id) => String(id) !== String(user?._id))
                     return <span style={{ color: seen ? '#2c9c5e' : 'var(--muted-2)', fontWeight: 700 }}>{seen ? 'Vu' : 'Envoyé'}</span>
                   })()}

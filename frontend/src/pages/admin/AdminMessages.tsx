@@ -19,11 +19,32 @@ export default function AdminMessages() {
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+  const threadRef = useRef<HTMLDivElement>(null)
 
-  const scrollDown = () => setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 60)
+  // Vrai si l'utilisateur est (quasi) en bas du fil → on peut auto-scroller sans le déranger
+  const isNearBottom = () => {
+    const el = threadRef.current
+    if (!el) return true
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 120
+  }
+  // force=true : toujours scroller (ex. message qu'on vient d'envoyer)
+  const scrollDown = (force = false) => {
+    if (!force && !isNearBottom()) return
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 60)
+  }
+
+  // Réf de l'id actif, lisible dans les closures (polling, timeouts, events socket)
+  const activeIdRef = useRef<string | null>(null)
+  useEffect(() => { activeIdRef.current = active?._id ?? null }, [active])
 
   const loadConvs = () =>
-    api.get<Conversation[]>('/conversations').then((r) => setConvs(r.data)).catch(() => {})
+    api.get<Conversation[]>('/conversations')
+      .then((r) => {
+        // La conversation ouverte ne doit jamais afficher de non-lu (on la lit en direct)
+        const list = r.data.map((c) => (c._id === activeIdRef.current ? { ...c, adminUnread: 0 } : c))
+        setConvs(list)
+      })
+      .catch(() => {})
 
   useEffect(() => { loadConvs(); resetUnread() }, [])
 
@@ -42,10 +63,15 @@ export default function AdminMessages() {
   const open = (c: Conversation) => {
     setActive(c)
     setActiveConversation(c._id)
+    // Optimiste : on efface tout de suite le badge non-lu de cette conv
+    setConvs((prev) => prev.map((x) => (x._id === c._id ? { ...x, adminUnread: 0 } : x)))
     api.get<{ data: Message[] }>(`/conversations/${c._id}/messages`).then((r) => { setMessages(r.data.data); scrollDown() })
     socket?.emit('join_conversation', { conversationId: c._id })
-    // recharge la liste pour remettre à zéro le badge de cette conv
-    setTimeout(loadConvs, 400)
+    // Marque la conversation comme lue (REST = source de vérité, garantit la remise à zéro)
+    api.post(`/conversations/${c._id}/read`).catch(() => {})
+    socket?.emit('mark_read', { conversationId: c._id })
+    // recharge la liste après prise en compte côté serveur
+    setTimeout(loadConvs, 500)
   }
 
   // Temps réel
@@ -69,26 +95,47 @@ export default function AdminMessages() {
       loadConvs()
     }
 
-    const onMessageSeen = (_d: { userId: string; conversationId: string }) => {
+    // Notification globale : arrive à TOUS les admins, même hors de la room de la conv.
+    // Si elle concerne la conversation ouverte, on recharge ses messages → affichage auto.
+    const onNotif = (n: { conversationId: string }) => {
+      if (active && n?.conversationId === active._id) {
+        // Conv ouverte → on lit en direct : recharge + re-marque lu (pas d'incrémentation)
+        api.get<{ data: Message[] }>(`/conversations/${active._id}/messages`)
+          .then((r) => { setMessages(r.data.data); scrollDown() })
+          .catch(() => {})
+        socket.emit('mark_read', { conversationId: active._id })
+        api.post(`/conversations/${active._id}/read`).catch(() => {})
+      }
+      loadConvs()
+    }
+
+    const onMessageSeen = () => {
       // on recharge pour refléter readBy
       if (active) {
         api.get<{ data: Message[] }>(`/conversations/${active._id}/messages`).then((r) => setMessages(r.data.data)).catch(() => {})
       }
     }
 
+    // À chaque (re)connexion du socket, on rejoint la room de la conv ouverte
+    // pour continuer à recevoir new_message après une coupure réseau / reconnexion.
+    const onConnect = () => {
+      if (active) socket.emit('join_conversation', { conversationId: active._id })
+    }
+
+    socket.on('connect', onConnect)
     socket.on('user_presence', onPresence)
     socket.on('new_message', onNew)
-    socket.on('message_notification', loadConvs)
+    socket.on('message_notification', onNotif)
     socket.on('message_seen', onMessageSeen)
 
     return () => {
+      socket.off('connect', onConnect)
       socket.off('user_presence', onPresence)
       socket.off('new_message', onNew)
-      socket.off('message_notification', loadConvs)
+      socket.off('message_notification', onNotif)
       socket.off('message_seen', onMessageSeen)
     }
   }, [socket, active])
-
 
   const send = () => {
     if (!text.trim() || !active) return
@@ -107,14 +154,14 @@ export default function AdminMessages() {
       createdAt: new Date().toISOString(),
     } as unknown as Message
     setMessages((prev) => [...prev, optimistic])
-    scrollDown()
+    scrollDown(true)
     // 2) Source de vérité: REST (persiste côté backend)
-    api.post<{ _id: string; content: string; conversation: string; sender: any; createdAt: string; readBy?: string[] }>(
+    api.post<Message>(
       `/conversations/${active._id}/messages`,
       { content, type: 'TEXT' },
     )
       .then((r) => {
-        const saved = r.data as unknown as Message
+        const saved = r.data
         setMessages((prev) => {
           const withoutTemp = prev.filter((m) => m._id !== tempId)
           if (withoutTemp.some((m) => m._id === saved._id)) return withoutTemp
@@ -130,10 +177,10 @@ export default function AdminMessages() {
   const clientName = (c: Conversation) => c.client ? `${c.client.firstName} ${c.client.lastName}` : 'Client'
 
   return (
-    <div style={{ margin: -32 }}>
-      <div style={{ display: 'flex', height: 'calc(100vh - 65px)', minHeight: 520, border: '1px solid var(--line-2)' }}>
+    <div className="lun-msg-wrap">
+      <div className={`lun-msg-grid${active ? ' has-active' : ''}`}>
         {/* Liste conversations */}
-        <aside style={{ width: 320, borderRight: '1px solid var(--line-2)', display: 'flex', flexDirection: 'column', background: 'var(--paper)' }}>
+        <aside className="lun-msg-list" style={{ borderRight: '1px solid var(--line-2)', display: 'flex', flexDirection: 'column', background: 'var(--paper)' }}>
           <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--line-2)' }}>
             <h1 className="display" style={{ fontSize: 28, margin: 0 }}>Messages</h1>
             <div style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 2 }}>{convs.length} conversation{convs.length > 1 ? 's' : ''}</div>
@@ -174,7 +221,7 @@ export default function AdminMessages() {
         </aside>
 
         {/* Panneau de chat */}
-        <section style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--ivory)' }}>
+        <section className="lun-msg-chat" style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--ivory)' }}>
           {!active ? (
             <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--muted-2)' }}>
               <Icon name="chat" size={48} color="var(--line)" />
@@ -183,6 +230,10 @@ export default function AdminMessages() {
           ) : (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 24px', borderBottom: '1px solid var(--line-2)', background: 'var(--paper)' }}>
+                <button type="button" className="lun-msg-back" aria-label="Retour aux conversations" onClick={() => setActive(null)}
+                  style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginRight: -4 }}>
+                  <Icon name="chevl" size={22} color="var(--ink)" />
+                </button>
                 <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--night)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, position: 'relative' }}>
                   {clientName(active)[0]}
                   <span
@@ -214,7 +265,7 @@ export default function AdminMessages() {
               </div>
 
 
-              <div style={{ flex: 1, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
+              <div ref={threadRef} style={{ flex: 1, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
                 {messages.map((m) => {
                   const mine = m.sender?.role === 'ADMIN'
                   // « Vu » UNIQUEMENT si le destinataire (le client) a ouvert/lu le message
@@ -243,7 +294,7 @@ export default function AdminMessages() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 22px', borderTop: '1px solid var(--line-2)', background: 'var(--paper)' }}>
-                <input value={text} onChange={(e) => setText(e.target.value)}
+                <input value={text} onChange={(e) => { setText(e.target.value); socket?.emit('typing', { conversationId: active._id }) }}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
                   aria-label={`Répondre à ${clientName(active)}`}
                   placeholder={`Répondre à ${clientName(active)}…`}

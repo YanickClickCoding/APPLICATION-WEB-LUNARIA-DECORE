@@ -30,9 +30,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   connect: (token) => {
     if (get().socket) return
-    const socket = io(`${import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000'}/chat`, {
+    // En dev, on se connecte à la MÊME origine que la page (proxifiée par Vite
+    // vers le backend) : ça marche depuis le PC comme depuis un téléphone.
+    // VITE_SOCKET_URL ne sert que d'override explicite (ex. prod multi-domaine).
+    const base = import.meta.env.VITE_SOCKET_URL || ''
+    const socket = io(`${base}/chat`, {
       auth: { token },
-      transports: ['websocket'],
+      // websocket d'abord, mais on garde le polling en repli (utile derrière proxy)
+      transports: ['websocket', 'polling'],
     })
 
     // Notification globale (pastille) — reçue même hors de la fenêtre de chat

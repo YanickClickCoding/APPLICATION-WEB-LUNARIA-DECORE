@@ -12,7 +12,10 @@ export class Product {
   @Prop({ required: true }) price: number;
   @Prop() comparePrice: number;
   @Prop([String]) images: string[];
+  // Catégorie principale (rétrocompat) + appartenance à plusieurs familles
   @Prop({ type: Types.ObjectId, ref: 'Category' }) category: Types.ObjectId;
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Category' }], default: [] })
+  categories: Types.ObjectId[];
   @Prop([String]) tags: string[];
   @Prop({ default: 0 }) stock: number;
   @Prop({ default: 5 }) lowStockThreshold: number;
@@ -33,3 +36,4 @@ export class Product {
 export const ProductSchema = SchemaFactory.createForClass(Product);
 ProductSchema.index({ name: 'text', description: 'text', tags: 'text' });
 ProductSchema.index({ category: 1, isAvailable: 1 });
+ProductSchema.index({ categories: 1, isAvailable: 1 });

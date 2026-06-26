@@ -50,11 +50,11 @@ function ServiceForm({ service, categories, onClose }: { service?: DecorationSer
           <div><label style={lbl}>Nom *</label><input required className="field" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Chambre Romantique Prestige" /></div>
           <div><label style={lbl}>Accroche</label><input className="field" value={form.shortDescription} onChange={(e) => set('shortDescription', e.target.value)} placeholder="L'expérience romantique ultime" /></div>
           <div><label style={lbl}>Description *</label><textarea required rows={3} className="field" style={{ resize: 'none' }} value={form.description} onChange={(e) => set('description', e.target.value)} /></div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="lun-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div><label style={lbl}>Prix de base (FCFA) *</label><input required type="number" className="field" value={form.basePrice} onChange={(e) => set('basePrice', e.target.value)} placeholder="25000" /></div>
             <div><label style={lbl}>Note prix</label><input className="field" value={form.priceNote} onChange={(e) => set('priceNote', e.target.value)} placeholder="À partir de…" /></div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="lun-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
               <label style={lbl}>Catégorie *</label>
               <select required className="field" style={{ cursor: 'pointer' }} value={form.category} onChange={(e) => set('category', e.target.value)}>

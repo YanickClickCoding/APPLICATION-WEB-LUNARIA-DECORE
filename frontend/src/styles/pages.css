@@ -141,16 +141,82 @@
 .lun-feat-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
 .lun-feat-price { font-size: 26px; font-variant-numeric: tabular-nums; }
 
-/* ═══════════════════ HOME — COMMENT ÇA MARCHE ═══════════════════ */
-.lun-steps { gap: 28px; }
-.lun-step { position: relative; background: var(--paper); border: 1px solid var(--line-2); border-radius: var(--r-lg);
-  padding: 36px 28px 30px; box-shadow: var(--sh-sm); }
-.lun-step-num { position: absolute; top: 22px; right: 26px; font-family: var(--serif); font-size: 46px;
-  font-weight: 600; color: var(--blush-2); line-height: 1; }
-.lun-step-ico { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px;
-  border-radius: 50%; background: var(--coral-soft); margin-bottom: 18px; }
-.lun-step-title { font-size: 23px; font-weight: 600; }
-.lun-step-desc { font-size: 14.5px; color: var(--muted); line-height: 1.65; margin-top: 8px; }
+/* ═══════════════════ HOME — COMMENT ÇA MARCHE (timeline) ═══════════════════ */
+.lun-timeline {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-top: 12px;
+}
+/* Ligne dorée reliant les pastilles : s'arrête au centre des étapes extrêmes */
+.lun-timeline-line {
+  position: absolute;
+  top: 38px; /* = moitié de la hauteur de la pastille (76/2) */
+  left: calc(100% / 6);  /* centre de la 1re colonne */
+  right: calc(100% / 6); /* centre de la 3e colonne */
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold-soft) 0%, var(--gold) 50%, var(--gold-soft) 100%);
+  z-index: 0;
+}
+.lun-tl-step {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 8px;
+}
+.lun-tl-node {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #2b1424; /* identique aux boutons "+" d'ajout au panier */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 26px rgba(43, 20, 36, 0.28);
+  margin-bottom: 22px;
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+.lun-tl-step:hover .lun-tl-node {
+  transform: translateY(-4px) scale(1.04);
+  box-shadow: 0 16px 34px rgba(43, 20, 36, 0.34);
+}
+.lun-tl-ico { display: inline-flex; align-items: center; justify-content: center; }
+/* Petit badge numéro doré en surimpression sur la pastille */
+.lun-tl-num {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--coral-deep);
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--sh-sm);
+  border: 1.5px solid var(--gold-soft);
+}
+.lun-tl-title { font-size: 22px; font-weight: 600; }
+.lun-tl-desc {
+  font-size: 14.5px;
+  color: var(--muted);
+  line-height: 1.65;
+  margin-top: 8px;
+  max-width: 280px;
+}
+@media (max-width: 760px) {
+  .lun-timeline { grid-template-columns: 1fr; gap: 36px; }
+  .lun-timeline-line { display: none; }
+}
 
 /* ═══════════════════ HOME — BANDE SUR MESURE ═══════════════════ */
 .lun-band-inner { display: flex; gap: 56px; align-items: center; }
@@ -177,7 +243,6 @@
   .lun-hero-grid { padding-top: 120px; padding-bottom: 60px; }
   .lun-band-inner { flex-direction: column; }
   .lun-band-img { width: 100%; }
-  .lun-steps { gap: 20px; }
   /* Mobile : recentre l'image sur les fleurs + voile vertical pour lisibilité */
   .lun-hero {
     background:
@@ -197,8 +262,25 @@
 }
 
 /* ═══════════════════ ESPACE COMPTE (sidebar) ═══════════════════ */
-.lun-acc { max-width: var(--maxw); margin: 0 auto; padding: 40px var(--gutter) 64px; display: flex; gap: 36px; }
-.lun-acc-side { width: 250px; flex-shrink: 0; }
+.lun-acc { max-width: var(--maxw); margin: 0 auto; padding: 40px var(--gutter) 64px; display: flex; align-items: flex-start; gap: 36px; }
+.lun-acc-side {
+  width: 250px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 96px; /* sous la navbar fixe (~76px) + marge */
+  align-self: flex-start;
+}
+
+/* Profil : les deux cartes (infos + adresse) côte à côte */
+.lun-profile-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .lun-profile-cards { grid-template-columns: 1fr; }
+}
 
 /* Ligne cliquable réutilisable (commandes, événements, favoris…) */
 .lun-row {
@@ -237,7 +319,7 @@
 
 @media (max-width: 860px) {
   .lun-acc { flex-direction: column; padding: 28px var(--gutter-sm); gap: 22px; }
-  .lun-acc-side { width: 100%; }
+  .lun-acc-side { width: 100%; position: static; top: auto; }
 }
 /* Grilles de formulaire 2 colonnes -> 1 colonne sur mobile */
 @media (max-width: 560px) {
@@ -284,6 +366,26 @@
 .lun-prodcard-add { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--night);
   cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s, transform .15s; }
 .lun-prodcard-add:hover { background: var(--coral); transform: scale(1.08); }
+
+/* — Squelettes de chargement (shimmer) — */
+.lun-skel-card { cursor: default; box-shadow: var(--sh-sm); }
+.lun-skel-card:hover { transform: none; box-shadow: var(--sh-sm); }
+.lun-skel {
+  position: relative; overflow: hidden;
+  background: var(--ivory-2); border-radius: var(--r-sm);
+}
+.lun-prodcard-media.lun-skel { border-radius: 0; }
+.lun-skel-line { border-radius: var(--r-pill); }
+.lun-skel::after {
+  content: ''; position: absolute; inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.55) 50%, transparent 100%);
+  animation: lun-shimmer 1.3s ease-in-out infinite;
+}
+@keyframes lun-shimmer { 100% { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  .lun-skel::after { animation: none; }
+}
 
 /* ═══════════════════ FICHE PRODUIT ═══════════════════ */
 .lun-fiche { max-width: var(--maxw); margin: 0 auto; }
@@ -335,12 +437,69 @@
 .lun-gal-item { break-inside: avoid; margin-bottom: 16px; border-radius: var(--r-md); overflow: hidden; cursor: zoom-in; position: relative; }
 .lun-gal-item img { width: 100%; display: block; transition: transform .5s var(--ease); }
 .lun-gal-item:hover img { transform: scale(1.04); }
-.lun-gal-overlay { position: absolute; inset: 0; opacity: 0; transition: opacity .3s; display: flex;
-  flex-direction: column; justify-content: flex-end; padding: 16px;
-  background: linear-gradient(to top, rgba(43,20,36,.78), transparent 55%); }
+.lun-gal-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity .35s var(--ease);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(43,20,36,.92) 0%, rgba(43,20,36,.45) 45%, rgba(43,20,36,.08) 100%);
+}
 .lun-gal-item:hover .lun-gal-overlay { opacity: 1; }
-.lun-gal-occ { font-size: 11px; color: var(--gold-bright); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
-.lun-gal-cat { color: #fff; font-size: 18px; font-weight: 600; }
+/* Loupe en haut à droite pour signaler le clic d'agrandissement */
+.lun-gal-zoom {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.16);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(.8);
+  transition: transform .35s var(--ease);
+}
+.lun-gal-item:hover .lun-gal-zoom { transform: scale(1); }
+/* Texte : léger glissement vers le haut à l'apparition */
+.lun-gal-text {
+  transform: translateY(10px);
+  transition: transform .35s var(--ease);
+}
+.lun-gal-item:hover .lun-gal-text { transform: translateY(0); }
+.lun-gal-occ {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--gold-bright);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.lun-gal-occ::before {
+  content: '';
+  width: 14px;
+  height: 1.5px;
+  background: var(--gold-bright);
+}
+.lun-gal-cat { color: #fff; font-size: 19px; font-weight: 600; line-height: 1.2; }
+.lun-gal-view {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(255,255,255,.75);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lun-gal-text, .lun-gal-zoom { transition: none; transform: none; }
+}
 .lun-gal-cta { text-align: center; padding: 56px var(--gutter-sm); }
 .lun-gal-cta-title { font-size: clamp(28px, 4vw, 40px); margin: 0; }
 .lun-lightbox { position: fixed; inset: 0; background: rgba(43,20,36,.92); z-index: 80; display: flex;
@@ -364,8 +523,64 @@
 .lun-about-stat-num { font-size: clamp(34px, 4vw, 46px); color: var(--coral); }
 .lun-about-stat-lbl { font-size: 13px; color: var(--muted); margin-top: 4px; }
 .lun-about-values { gap: 24px; }
-.lun-about-value { background: var(--paper); border: 1px solid var(--line-2); border-radius: var(--r-lg);
-  padding: 30px 26px; box-shadow: var(--sh-sm); }
+.lun-value-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  padding: 32px 26px 28px;
+  box-shadow: var(--sh-sm);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+/* Liseré en haut de carte (couleur des boutons "+") */
+.lun-value-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #2b1424;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s var(--ease);
+}
+.lun-value-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--sh-md);
+}
+.lun-value-card:hover::before { transform: scaleX(1); }
+/* Pastille d'icône — identique aux boutons "+" d'ajout au panier */
+.lun-value-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: #2b1424;
+  box-shadow: 0 8px 20px rgba(43, 20, 36, 0.26);
+  margin-bottom: 20px;
+}
+/* Numéro de valeur en filigrane, serif doré */
+.lun-value-idx {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 30px;
+  color: var(--gold-soft);
+  line-height: 1;
+}
+.lun-value-title { font-size: 21px; font-weight: 600; }
+.lun-value-desc {
+  font-size: 14.5px;
+  color: var(--muted);
+  line-height: 1.65;
+  margin-top: 8px;
+}
 
 /* — FAQ — */
 .lun-faq { display: flex; flex-direction: column; gap: 12px; }
@@ -400,6 +615,7 @@
 .lun-contact-link { color: var(--ink); text-decoration: none; }
 .lun-contact-link:hover { color: var(--coral); }
 .lun-contact-socials { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.lun-contact-cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 8px; }
 .lun-social { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: var(--r-pill);
   color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; transition: transform .15s, opacity .15s; }
 .lun-social:hover { transform: translateY(-2px); }
@@ -417,10 +633,51 @@
 .lun-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center;
   justify-content: space-between; padding: 8px var(--gutter); transition: padding .3s, background .3s; }
 .lun-nav.is-scrolled { padding-top: 4px; padding-bottom: 4px; }
-.lun-nav-links { display: flex; gap: 34px; }
+.lun-nav-links { display: flex; gap: 34px; align-items: center; }
 .lun-nav-link { font-size: 14.5px; font-weight: 500; position: relative; text-decoration: none; padding-bottom: 4px; }
 .lun-nav-link.is-active { font-weight: 600; }
 .lun-nav-underline { position: absolute; left: 0; right: 0; bottom: -6px; height: 2px; background: var(--gold-bright); border-radius: 2px; }
+
+/* — Menus déroulants — */
+.lun-nav-item { position: relative; }
+.lun-nav-trigger {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: none; border: none; cursor: pointer; font-family: var(--sans);
+  font-size: 14.5px; padding: 0 0 4px;
+}
+.lun-nav-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  min-width: 210px;
+  background: var(--paper);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-md);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .2s var(--ease), transform .2s var(--ease), visibility .2s;
+  z-index: 60;
+}
+/* Pont invisible pour ne pas perdre le survol entre le bouton et le panneau */
+.lun-nav-dropdown::before {
+  content: ''; position: absolute; top: -12px; left: 0; right: 0; height: 12px;
+}
+.lun-nav-item.is-open .lun-nav-dropdown,
+.lun-nav-item:focus-within .lun-nav-dropdown {
+  opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0);
+}
+.lun-nav-dropitem {
+  display: block; padding: 10px 14px; border-radius: var(--r-sm);
+  font-size: 14px; text-decoration: none; white-space: nowrap;
+  transition: background .15s;
+}
+.lun-nav-dropitem:hover { background: var(--ivory-2); }
 .lun-nav-actions { display: flex; align-items: center; gap: 20px; }
 .lun-icon-btn { background: none; border: none; cursor: pointer; display: flex; position: relative; }
 .lun-badge { position: absolute; top: -6px; right: -8px; background: var(--gold-bright); color: var(--night); font-size: 10px;
@@ -431,6 +688,12 @@
 .lun-mobile-menu { position: absolute; top: 100%; left: 0; right: 0; background: var(--paper);
   border-bottom: 1px solid var(--line); padding: 20px 24px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--sh-md); }
 .lun-mobile-link { padding: 12px 8px; font-size: 16px; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line-2); }
+.lun-mobile-group { display: flex; flex-direction: column; }
+.lun-mobile-grouplabel {
+  padding: 14px 8px 6px; font-family: var(--mono); font-size: 11px;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+}
+.lun-mobile-sublink { padding-left: 22px; font-size: 15px; color: var(--muted); }
 @media (max-width: 900px) {
   .lun-nav { padding: 16px 20px; }
   .lun-nav-links, .lun-nav-hide { display: none; }
@@ -456,3 +719,119 @@
 .lun-footer-rule { height: 1px; background: var(--line-dark); margin: 40px 0 22px; }
 .lun-footer-bottom { display: flex; justify-content: space-between; font-size: 12.5px; color: rgba(255,255,255,.45); flex-wrap: wrap; gap: 12px; }
 @media (max-width: 900px) { .lun-footer { padding: 48px 20px 28px; } }
+
+/* ═══════════════════ TABLEAUX — survol des lignes ═══════════════════ */
+/* Conteneur de tableau : effet de survol sur chaque ligne (sauf l'en-tête = 1er enfant). */
+.lun-table > div:not(:first-child) {
+  transition: background .15s ease;
+}
+.lun-table > div:not(:first-child):hover {
+  background: var(--ivory-2);
+}
+/* Tableaux natifs <table> */
+.lun-table tbody tr {
+  transition: background .15s ease;
+}
+.lun-table tbody tr:hover {
+  background: var(--ivory-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lun-table > div, .lun-table tbody tr { transition: none; }
+}
+
+/* Pagination admin — en fin de contenu (ne masque rien) */
+.lun-pager-sticky {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 18px; padding-top: 4px;
+}
+.lun-pager-spacer { display: none; }
+
+/* ═══════════════════ ADMIN — layout responsive ═══════════════════ */
+.lun-admin { width: 100%; min-height: 100dvh; background: var(--ivory); display: flex; }
+
+.lun-admin-side {
+  width: 248px; flex-shrink: 0;
+  background: var(--night); color: #fff;
+  padding: 26px 18px; display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100dvh;
+}
+
+.lun-admin-content { flex: 1; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; min-width: 0; }
+
+.lun-admin-topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 16px 24px; border-bottom: 1px solid var(--line-2); background: var(--paper); flex-shrink: 0;
+}
+.lun-admin-search {
+  display: flex; align-items: center; gap: 10px; flex: 1; max-width: 320px;
+  background: var(--ivory); border-radius: var(--r-pill); padding: 9px 16px;
+}
+.lun-admin-main { padding: 32px; flex: 1; overflow-y: auto; }
+
+/* Bouton menu mobile + scrim : masqués sur desktop */
+.lun-admin-burger { display: none; background: none; border: none; cursor: pointer; padding: 4px; }
+.lun-admin-scrim { display: none; }
+
+/* Tablette */
+@media (max-width: 1100px) {
+  .lun-admin-main { padding: 24px; }
+}
+
+/* Mobile / petite tablette : sidebar en tiroir */
+@media (max-width: 900px) {
+  .lun-admin-side {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 1001;
+    transform: translateX(-100%); transition: transform .25s ease;
+    box-shadow: 0 0 40px rgba(0,0,0,.35);
+  }
+  .lun-admin-side.is-open { transform: translateX(0); }
+  .lun-admin-scrim {
+    display: block; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(43,20,36,.5);
+  }
+  .lun-admin-burger { display: inline-flex; }
+  .lun-admin-main { padding: 18px 16px; }
+  .lun-admin-username { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lun-admin-side { transition: none; }
+}
+
+/* ═══════════════════ TABLEAUX — scroll horizontal sur petit écran ═══════════════════ */
+/* Les tableaux admin ont des colonnes fixes : on autorise le défilement latéral
+   au lieu de casser la mise en page. */
+@media (max-width: 760px) {
+  /* override du style inline overflow:hidden pour permettre le scroll latéral */
+  .lun-table { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .lun-table > div { min-width: 620px; }
+}
+
+/* ═══════════════════ PUBLIC — grilles services / fiche service ═══════════════════ */
+@media (max-width: 980px) {
+  .lun-grid4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .lun-grid3 { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 760px) {
+  .lun-svc-grid { flex-direction: column !important; gap: 28px !important; padding: 24px !important; }
+}
+@media (max-width: 560px) {
+  .lun-grid4, .lun-grid3 { grid-template-columns: 1fr !important; }
+}
+
+/* ═══════════════════ ADMIN — Messagerie responsive ═══════════════════ */
+.lun-msg-wrap { margin: -32px; }
+.lun-msg-grid { display: flex; height: calc(100dvh - 65px); min-height: 520px; border: 1px solid var(--line-2); }
+.lun-msg-list { width: 320px; flex-shrink: 0; }
+.lun-msg-chat { flex: 1; min-width: 0; }
+
+@media (max-width: 1100px) { .lun-msg-wrap { margin: -24px; } }
+
+@media (max-width: 760px) {
+  .lun-msg-wrap { margin: -18px -16px; }
+  /* Bascule liste ↔ conversation : on n'affiche qu'un panneau à la fois */
+  .lun-msg-list { width: 100%; }
+  .lun-msg-grid .lun-msg-chat { display: none; }
+  .lun-msg-grid.has-active .lun-msg-list { display: none; }
+  .lun-msg-grid.has-active .lun-msg-chat { display: flex; }
+  .lun-msg-back { display: flex !important; }
+}

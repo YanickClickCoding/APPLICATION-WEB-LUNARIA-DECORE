@@ -64,6 +64,7 @@ export interface Product {
   comparePrice?: number
   images: string[]
   category: Category
+  categories?: Category[]
   tags: string[]
   stock: number
   isAvailable: boolean
