@@ -1,15 +1,51 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import Icon from '@/components/ui/Icon'
-import { GALLERY } from '@/utils/images'
+import api from '@/services/api'
+import { productsService } from '@/services/products.service'
+import type { Category, Product } from '@/types'
 import { clickable } from '@/hooks/useClickable'
 
-const FILTERS = ['Toutes', 'Saint-Valentin', 'Mariage', 'Anniversaire', 'Fête des mères', 'Baptême', 'Lune de miel']
+interface GalleryItem {
+  src: string
+  cat: string
+  occasion: string
+  categoryId: string
+}
 
 export default function GaleriePage() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState('Toutes')
   const [lightbox, setLightbox] = useState<number | null>(null)
+
+  // Catégories réelles → filtres de la galerie
+  const { data: categories } = useQuery<Category[]>({
+    queryKey: ['categories'],
+    queryFn: () => api.get<Category[]>('/categories').then((r) => r.data),
+  })
+
+  // Produits (avec images) → vignettes de la galerie
+  const { data: productsData } = useQuery({
+    queryKey: ['gallery-products'],
+    queryFn: () => productsService.getAll({ limit: 200 }).then((r) => r.data),
+  })
+
+  // Construit les vignettes à partir des produits qui ont une image
+  const gallery: GalleryItem[] = useMemo(() => {
+    const products: Product[] = productsData?.data ?? []
+    return products
+      .filter((p) => p.images?.[0])
+      .map((p) => {
+        const cat = typeof p.category === 'object' ? p.category : undefined
+        return {
+          src: p.images[0],
+          cat: p.name,
+          occasion: cat?.name ?? '',
+          categoryId: cat?._id ?? '',
+        }
+      })
+  }, [productsData])
 
   // Fermeture de la lightbox au clavier (Échap) — règle a11y "escape-routes"
   useEffect(() => {
@@ -19,7 +55,7 @@ export default function GaleriePage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [lightbox])
 
-  const filtered = filter === 'Toutes' ? GALLERY : GALLERY.filter((g) => g.occasion === filter)
+  const filtered = filter === 'Toutes' ? gallery : gallery.filter((g) => g.occasion === filter)
 
   return (
     <div>
@@ -39,8 +75,9 @@ export default function GaleriePage() {
       <div className="bg-ivory section-sm">
         <div className="container">
           <div className="lun-gal-filters">
-            {FILTERS.map((f) => (
-              <span key={f} className={`chip ${filter === f ? 'chip-active' : ''}`} onClick={() => setFilter(f)}>{f}</span>
+            <span className={`chip ${filter === 'Toutes' ? 'chip-active' : ''}`} onClick={() => { setFilter('Toutes'); setLightbox(null) }}>Toutes</span>
+            {categories?.map((c) => (
+              <span key={c._id} className={`chip ${filter === c.name ? 'chip-active' : ''}`} onClick={() => { setFilter(c.name); setLightbox(null) }}>{c.name}</span>
             ))}
           </div>
 
@@ -49,8 +86,12 @@ export default function GaleriePage() {
               <div key={`${filter}-${i}`} {...clickable(() => setLightbox(i), `Agrandir : ${item.occasion} ${item.cat}`)} className="lun-gal-item">
                 <img src={item.src} alt={item.cat} />
                 <div className="lun-gal-overlay">
-                  <span className="lun-gal-occ">{item.occasion}</span>
-                  <span className="serif lun-gal-cat">{item.cat}</span>
+                  <span className="lun-gal-zoom"><Icon name="search" size={16} color="#fff" /></span>
+                  <div className="lun-gal-text">
+                    {item.occasion && <span className="lun-gal-occ">{item.occasion}</span>}
+                    <div className="serif lun-gal-cat">{item.cat}</div>
+                    <span className="lun-gal-view">Cliquer pour agrandir</span>
+                  </div>
                 </div>
               </div>
             ))}

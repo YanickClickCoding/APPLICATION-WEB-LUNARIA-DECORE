@@ -63,7 +63,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 18, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 18, marginBottom: 24 }}>
         {kpis.map(([l, v, d, c]) => (
           <div key={l} style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-md)', padding: '20px 22px' }}>
             <div style={{ fontSize: 13, color: 'var(--muted)' }}>{l}</div>
@@ -73,11 +73,11 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: 20 }}>
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
         {/* en cours */}
-        <div style={{ flex: 1.5, background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', padding: 24 }}>
+        <div style={{ flex: '1.5 1 320px', background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', padding: 24 }}>
           <h3 className="serif" style={{ fontSize: 20, fontWeight: 600, margin: '0 0 20px' }}>Activité en cours</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16 }}>
             {[
               ['Commandes à traiter', stats?.orders.pending ?? 0, 'var(--coral)', '/admin/commandes'],
               ['Livraisons en route', stats?.deliveries.inProgress ?? 0, 'var(--gold)', '/admin/livraisons'],
@@ -93,7 +93,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* répartition */}
-        <div style={{ flex: 1, background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', padding: 24 }}>
+        <div style={{ flex: '1 1 280px', background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', padding: 24 }}>
           <h3 className="serif" style={{ fontSize: 20, fontWeight: 600, margin: '0 0 18px' }}>Synthèse</h3>
           {[
             ['Total commandes', stats?.orders.total ?? 0],
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* commandes récentes */}
-      <div style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', marginTop: 20, overflow: 'hidden' }}>
+      <div className="lun-table" style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', marginTop: 20, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 24px', borderBottom: '1px solid var(--line-2)' }}>
           <h3 className="serif" style={{ fontSize: 20, fontWeight: 600, margin: 0 }}>Commandes récentes</h3>
           <span onClick={() => navigate('/admin/commandes')} style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--coral)', cursor: 'pointer' }}>Tout voir</span>

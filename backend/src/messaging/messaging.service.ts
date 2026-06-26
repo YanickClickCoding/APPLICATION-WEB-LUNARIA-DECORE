@@ -18,22 +18,25 @@ export class MessagingService {
   // ─── Conversations ────────────────────────────────────────────
   /** Récupère ou crée LA conversation de support d'un client */
   async getOrCreateConversation(clientId: string, subject?: string) {
-    let conv = await this.convModel.findOne({
-      client: new Types.ObjectId(clientId),
-      isArchived: false,
-    });
+    const clientOid = new Types.ObjectId(clientId);
+    // Atomique : évite les doublons en cas d'appels simultanés (race condition).
+    // $setOnInsert ne s'applique qu'à la création ; rien n'est écrasé si la conv existe.
+    const conv = await this.convModel.findOneAndUpdate(
+      { client: clientOid, isArchived: false },
+      {
+        $setOnInsert: {
+          client: clientOid,
+          participants: [clientOid],
+          subject: subject ?? 'Conversation avec LUNARIA',
+          clientUnread: 0,
+          adminUnread: 0,
+        },
+      },
+      { upsert: true, returnDocument: 'after' },
+    );
 
-    if (!conv) {
-      conv = await this.convModel.create({
-        client: new Types.ObjectId(clientId),
-        participants: [new Types.ObjectId(clientId)],
-        subject: subject ?? 'Conversation avec LUNARIA',
-        clientUnread: 0,
-        adminUnread: 0,
-      });
-    }
     return this.convModel
-      .findById(conv._id)
+      .findById(conv!._id)
       .populate('client', 'firstName lastName avatar role')
       .populate('agent', 'firstName lastName avatar role');
   }

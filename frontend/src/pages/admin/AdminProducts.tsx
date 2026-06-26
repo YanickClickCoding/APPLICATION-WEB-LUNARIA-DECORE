@@ -37,6 +37,7 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [products, setProducts] = useState<Product[]>([])
+  const [totalPages, setTotalPages] = useState(1)
 
   const [categories, setCategories] = useState<Category[]>([])
   // Filtre par id de catégorie ('' = Tous), pour correspondre à ce qu'attend le backend
@@ -65,6 +66,7 @@ export default function AdminProducts() {
     comparePrice: string
     stock: string
     category: string
+    categories: string[]
     isAvailable: boolean
     isFeatured: boolean
     tags: string
@@ -76,6 +78,7 @@ export default function AdminProducts() {
     comparePrice: '',
     stock: '10',
     category: '',
+    categories: [],
     isAvailable: true,
     isFeatured: true,
     tags: '',
@@ -92,12 +95,22 @@ export default function AdminProducts() {
       comparePrice: '',
       stock: '10',
       category: '',
+      categories: [],
       isAvailable: true,
       isFeatured: true,
       tags: '',
       images: '',
     })
   }
+
+  // Coche/décoche une famille additionnelle
+  const toggleCategory = (id: string) =>
+    setForm((f) => ({
+      ...f,
+      categories: f.categories.includes(id)
+        ? f.categories.filter((x) => x !== id)
+        : [...f.categories, id],
+    }))
 
   const load = async () => {
     setLoading(true)
@@ -107,7 +120,9 @@ export default function AdminProducts() {
       const res = await productsService.getAll({ category: categoryParam, page, limit, sort })
       // productsService renvoie { data, total, page, limit, totalPages }
       // Axios: res.data est déjà le payload
-      setProducts((res.data as any)?.data ?? [])
+      const payload = res.data as any
+      setProducts(payload?.data ?? [])
+      setTotalPages(Math.max(1, payload?.totalPages ?? 1))
     } catch (e: any) {
       setError(e?.response?.data?.message ?? e?.message ?? 'Erreur chargement produits')
     } finally {
@@ -158,6 +173,7 @@ export default function AdminProducts() {
       comparePrice: p.comparePrice ? String(p.comparePrice) : '',
       stock: String(p.stock ?? 0),
       category: (p.category as Category | undefined)?._id ?? (p.category as any)?.id ?? '',
+      categories: (p.categories ?? []).map((c) => (typeof c === 'object' ? c._id : c)).filter(Boolean) as string[],
       isAvailable: p.isAvailable,
       isFeatured: p.isFeatured,
       tags: p.tags?.join(', ') ?? '',
@@ -185,6 +201,8 @@ export default function AdminProducts() {
         .map((x) => x.trim())
         .filter(Boolean),
       category: form.category,
+      // Familles : la principale + les familles cochées (dédupliquées)
+      categories: Array.from(new Set([form.category, ...form.categories].filter(Boolean))),
       images,
     }
 
@@ -276,7 +294,25 @@ export default function AdminProducts() {
 
   return (
     <div className="lun-admin-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22, gap: 14 }}>
+      {/* Onglets catégories — en tête de page, juste sous la barre de recherche */}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
+        <button type="button" aria-pressed={categoryFilter === ''}
+          className={`chip ${categoryFilter === '' ? 'chip-active' : ''}`}
+          style={{ fontSize: 12.5, padding: '7px 14px', cursor: 'pointer', font: 'inherit', background: categoryFilter === '' ? 'var(--night)' : undefined, color: categoryFilter === '' ? '#fff' : undefined, border: '1px solid var(--line)', borderRadius: 'var(--r-pill)' }}
+          onClick={() => changeCategory('')}>
+          Tous
+        </button>
+        {categories.map((c) => (
+          <button key={c._id} type="button" aria-pressed={categoryFilter === c._id}
+            className={`chip ${categoryFilter === c._id ? 'chip-active' : ''}`}
+            style={{ fontSize: 12.5, padding: '7px 14px', cursor: 'pointer', font: 'inherit', background: categoryFilter === c._id ? 'var(--night)' : undefined, color: categoryFilter === c._id ? '#fff' : undefined, border: '1px solid var(--line)', borderRadius: 'var(--r-pill)' }}
+            onClick={() => changeCategory(c._id)}>
+            {c.name}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22, gap: 14, flexWrap: 'wrap' }}>
         <div>
           <h1 className="display" style={{ fontSize: 36, margin: 0 }}>
             Produits
@@ -305,25 +341,7 @@ export default function AdminProducts() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Filtres catégorie (vraies catégories de l'API, filtre par id) */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button type="button" aria-pressed={categoryFilter === ''}
-            className={`chip ${categoryFilter === '' ? 'chip-active' : ''}`}
-            style={{ fontSize: 12.5, padding: '7px 14px', cursor: 'pointer', font: 'inherit', background: categoryFilter === '' ? 'var(--night)' : undefined, color: categoryFilter === '' ? '#fff' : undefined, border: '1px solid var(--line)', borderRadius: 'var(--r-pill)' }}
-            onClick={() => changeCategory('')}>
-            Tous
-          </button>
-          {categories.map((c) => (
-            <button key={c._id} type="button" aria-pressed={categoryFilter === c._id}
-              className={`chip ${categoryFilter === c._id ? 'chip-active' : ''}`}
-              style={{ fontSize: 12.5, padding: '7px 14px', cursor: 'pointer', font: 'inherit', background: categoryFilter === c._id ? 'var(--night)' : undefined, color: categoryFilter === c._id ? '#fff' : undefined, border: '1px solid var(--line)', borderRadius: 'var(--r-pill)' }}
-              onClick={() => changeCategory(c._id)}>
-              {c.name}
-            </button>
-          ))}
-        </div>
-
+      <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end' }}>
         {/* Tri */}
         <div ref={sortRef} style={{ position: 'relative' }}>
           <button type="button" onClick={() => setSortOpen((v) => !v)}
@@ -363,7 +381,7 @@ export default function AdminProducts() {
         </div>
       )}
 
-      <div style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+      <div className="lun-table" style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
         <div
           style={{
             display: 'grid',
@@ -405,9 +423,15 @@ export default function AdminProducts() {
                 fontSize: 14,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div className={`ph ${p.isFeatured ? 'gold' : 'warm'}`} style={{ width: 46, height: 46, borderRadius: 'var(--r-sm)' }} />
-                <span className="serif" style={{ fontSize: 18, fontWeight: 600 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+                {p.images?.[0] ? (
+                  <img src={p.images[0]} alt={p.name}
+                    style={{ width: 46, height: 46, borderRadius: 'var(--r-sm)', objectFit: 'cover', flexShrink: 0, background: 'var(--ivory-2)' }}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = 'hidden' }} />
+                ) : (
+                  <div className={`ph ${p.isFeatured ? 'gold' : 'warm'}`} style={{ width: 46, height: 46, borderRadius: 'var(--r-sm)', flexShrink: 0 }} />
+                )}
+                <span className="serif" style={{ fontSize: 18, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {p.name}
                 </span>
               </div>
@@ -432,13 +456,14 @@ export default function AdminProducts() {
         })}
       </div>
 
-      {/* MVP pagination */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18 }}>
+      {/* Pagination — toujours affichée */}
+      <div className="lun-pager-spacer" />
+      <div className="lun-pager-sticky">
         <button className="btn btn-ghost" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
           ← Précédent
         </button>
-        <span style={{ color: 'var(--muted)' }}>Page {page}</span>
-        <button className="btn btn-ghost" onClick={() => setPage((p) => p + 1)}>
+        <span style={{ color: 'var(--muted)' }}>Page {page} / {totalPages}</span>
+        <button className="btn btn-ghost" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
           Suivant →
         </button>
       </div>
@@ -487,33 +512,43 @@ export default function AdminProducts() {
               {/* — Section : Informations — */}
               <section>
                 <div className="eyebrow" style={{ marginBottom: 14 }}>Informations</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="lun-form-grid">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'start' }} className="lun-form-grid">
                   <label style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
                     Nom du produit
                     <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="field" placeholder="Ex: Arche fleurie blanche" />
                   </label>
 
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
-                    Catégorie
+                  <label style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
+                    Catégorie principale
                     <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} className="field">
-                      <option value="">— Choisir une catégorie —</option>
+                      <option value="">— Choisir une famille —</option>
                       {categories.map((c) => (
                         <option key={c._id} value={c._id}>{c.name}</option>
                       ))}
                     </select>
                   </label>
 
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>Autres familles <span style={{ fontWeight: 400, color: 'var(--muted-2)', fontSize: 12 }}>(le produit apparaîtra dans chacune)</span></span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {categories.filter((c) => c._id !== form.category).map((c) => {
+                        const on = form.categories.includes(c._id)
+                        return (
+                          <button key={c._id} type="button" onClick={() => toggleCategory(c._id)} aria-pressed={on}
+                            style={{ fontSize: 12.5, padding: '7px 14px', borderRadius: 'var(--r-pill)', cursor: 'pointer', font: 'inherit',
+                              border: `1px solid ${on ? 'var(--coral)' : 'var(--line)'}`,
+                              background: on ? 'var(--coral-soft)' : 'var(--paper)',
+                              color: on ? 'var(--coral-deep)' : 'var(--ink)', fontWeight: on ? 700 : 500 }}>
+                            {on ? '✓ ' : ''}{c.name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
                   <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
                     Prix (FCFA)
                     <input type="number" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} className="field" />
-                  </label>
-
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
-                    Prix avant promo (FCFA) <span style={{ fontWeight: 400, color: 'var(--muted-2)', fontSize: 12 }}>(optionnel)</span>
-                    <input type="number" value={form.comparePrice} onChange={(e) => setForm((f) => ({ ...f, comparePrice: e.target.value }))} className="field" placeholder="Laisser vide si pas de promo" />
-                    <span style={{ fontWeight: 400, color: 'var(--muted-2)', fontSize: 11.5 }}>
-                      Renseignez l'ancien prix (barré) pour afficher l'étiquette « Promo ».
-                    </span>
                   </label>
 
                   <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
@@ -522,9 +557,18 @@ export default function AdminProducts() {
                   </label>
 
                   <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
+                    Prix avant promo (FCFA) <span style={{ fontWeight: 400, color: 'var(--muted-2)', fontSize: 12 }}>(optionnel)</span>
+                    <input type="number" value={form.comparePrice} onChange={(e) => setForm((f) => ({ ...f, comparePrice: e.target.value }))} className="field" placeholder="Laisser vide si pas de promo" />
+                  </label>
+
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
                     Tags <span style={{ fontWeight: 400, color: 'var(--muted-2)', fontSize: 12 }}>(séparés par des virgules)</span>
                     <input value={form.tags} onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))} className="field" placeholder="romantique, nuit" />
                   </label>
+
+                  <div style={{ gridColumn: '1 / -1', marginTop: -6, fontSize: 11.5, color: 'var(--muted-2)' }}>
+                    Le « prix avant promo » affiche l'ancien prix barré et l'étiquette « Promo » en boutique.
+                  </div>
 
                   <label style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
                     Description
@@ -645,10 +689,13 @@ export default function AdminProducts() {
             </div>
 
             {/* Pied fixe */}
-            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--line-2)', display: 'flex', justifyContent: 'flex-end', gap: 12, flexShrink: 0 }}>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--line-2)', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+              {imageList.length === 0 && !uploading && (
+                <span style={{ marginRight: 'auto', fontSize: 12.5, color: 'var(--muted)' }}>Ajoutez au moins une photo pour {editing ? 'enregistrer' : 'créer'}.</span>
+              )}
               <button className="btn btn-ghost" onClick={() => setModalOpen(false)}>Annuler</button>
-              <button className="btn btn-primary" onClick={onSave} disabled={loading || !form.name || !form.category}>
-                {loading ? 'En cours…' : editing ? 'Enregistrer' : 'Créer'}
+              <button className="btn btn-primary" onClick={onSave} disabled={loading || uploading || !form.name || !form.category || imageList.length === 0}>
+                {loading ? 'En cours…' : uploading ? 'Téléversement…' : editing ? 'Enregistrer' : 'Créer'}
               </button>
             </div>
           </div>

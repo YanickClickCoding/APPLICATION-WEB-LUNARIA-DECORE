@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import Icon from '@/components/ui/Icon'
 import { productsService } from '@/services/products.service'
 import api from '@/services/api'
 import type { Category } from '@/types'
 import ProductCard from '@/components/product/ProductCard'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import ProductCardSkeleton from '@/components/product/ProductCardSkeleton'
 
 type SortKey = 'popular' | 'price-asc' | 'price-desc' | 'recent'
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -32,9 +32,10 @@ export default function CataloguePage() {
     queryFn: () => api.get<Category[]>('/categories').then((r) => r.data),
   })
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ['products', { page, category: categoryId, search, sort }],
     queryFn: () => productsService.getAll({ page, limit: 12, category: categoryId, search: search || undefined, sort }).then((r) => r.data),
+    placeholderData: keepPreviousData,
   })
 
   const setCategory = (id?: string) => {
@@ -120,13 +121,17 @@ export default function CataloguePage() {
       </div>
 
       {/* Grille produits */}
-      {isLoading ? <LoadingSpinner /> : products.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-4" style={{ gap: 22, paddingBottom: 40 }}>
+          {Array.from({ length: 8 }, (_, i) => <ProductCardSkeleton key={i} />)}
+        </div>
+      ) : products.length === 0 ? (
         <div className="lun-cat-empty">
           <p>Aucun produit trouvé</p>
           <button onClick={() => { setSearch(''); setCategory(undefined) }} className="btn btn-ghost btn-sm" style={{ marginTop: 16 }}>Réinitialiser</button>
         </div>
       ) : (
-        <div className="grid grid-4" style={{ gap: 22, paddingBottom: 40 }}>
+        <div className="grid grid-4" style={{ gap: 22, paddingBottom: 40, opacity: isFetching ? 0.6 : 1, transition: 'opacity .2s' }}>
           {products.map((p) => <ProductCard key={p._id} product={p} />)}
         </div>
       )}

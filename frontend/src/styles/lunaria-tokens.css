@@ -76,6 +76,8 @@
   padding: 14px 26px; border-radius: var(--r-pill); border: none; cursor: pointer;
   transition: transform .15s, background .15s, box-shadow .15s; white-space: nowrap;
 }
+.lun .btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.lun .btn:disabled:hover { transform: none; }
 .lun .btn-primary { background: var(--festive); color: #fff; box-shadow: 0 6px 18px rgba(255,45,142,.32); }
 .lun .btn-dark    { background: var(--night); color: #fff; }
 .lun .btn-ghost   { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }

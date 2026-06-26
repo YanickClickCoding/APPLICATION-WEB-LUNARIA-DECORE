@@ -90,7 +90,7 @@ export default function AdminSuppliers() {
         <div style={{ background: 'rgba(255,45,142,.08)', color: 'var(--coral-deep)', border: '1px solid rgba(255,45,142,.25)', padding: '10px 14px', borderRadius: 'var(--r-md)', marginBottom: 16 }}>{error}</div>
       )}
 
-      <div style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+      <div className="lun-table" style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1.4fr 1.8fr 100px', padding: '14px 24px', fontSize: 11.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--line-2)' }}>
           <span>Nom</span><span>Contact</span><span>Téléphone</span><span>Email</span><span></span>
         </div>

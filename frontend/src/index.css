@@ -48,7 +48,7 @@
   --sh-lg: 0 18px 60px rgba(43,20,36,.16);
 
   /* — Mise en page — */
-  --maxw: 1280px;       /* largeur max conteneur */
+  --maxw: 1480px;       /* largeur max conteneur */
   --gutter: 56px;       /* marge horizontale desktop */
   --gutter-sm: 24px;    /* marge horizontale mobile */
   --sec-y: 72px;        /* rythme vertical des sections */

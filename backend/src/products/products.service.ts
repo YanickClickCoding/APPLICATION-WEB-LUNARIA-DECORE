@@ -2,6 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, isValidObjectId } from 'mongoose';
 import { Product, ProductDocument } from '../common/schemas/product.schema';
+import {
+  Category,
+  CategoryDocument,
+} from '../common/schemas/category.schema';
 
 type SortKey = 'popular' | 'price-asc' | 'price-desc' | 'recent';
 
@@ -26,7 +30,16 @@ const SORT_MAP: Record<SortKey, Record<string, 1 | -1>> = {
 export class ProductsService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
+    @InjectModel(Category.name)
+    private categoryModel: Model<CategoryDocument>,
   ) {}
+
+  // Résout un slug de catégorie en ObjectId ; renvoie null si déjà un id ou introuvable
+  private async resolveCategorySlug(value: string): Promise<Types.ObjectId | null> {
+    if (isValidObjectId(value)) return null;
+    const cat = await this.categoryModel.findOne({ slug: value }).select('_id');
+    return cat ? (cat._id as Types.ObjectId) : null;
+  }
 
   async findAll(filter: ProductFilter = {}) {
     const {
@@ -44,12 +57,23 @@ export class ProductsService {
     };
 
     if (category) {
-      // Accepte un ObjectId (id de catégorie) ou un slug de catégorie.
-      // Certains produits ont pu être enregistrés avec category en string :
-      // on matche donc à la fois l'ObjectId ET sa forme chaîne.
-      query.category = isValidObjectId(category)
-        ? { $in: [new Types.ObjectId(category), category] }
-        : category;
+      // Un produit appartient à plusieurs familles : il matche si la catégorie
+      // demandée est sa catégorie principale OU dans son tableau `categories`.
+      // Accepte un ObjectId OU un slug (résolu en id ici).
+      const resolved = await this.resolveCategorySlug(category);
+      if (resolved) {
+        // slug → id
+        query.$or = [{ category: resolved }, { categories: resolved }];
+      } else if (isValidObjectId(category)) {
+        const values = [new Types.ObjectId(category), category];
+        query.$or = [
+          { category: { $in: values } },
+          { categories: { $in: values } },
+        ];
+      } else {
+        // slug inconnu → aucun résultat (évite l'erreur de cast)
+        query._id = null;
+      }
     }
     if (search) query.$text = { $search: search };
     if (minPrice || maxPrice) {
@@ -63,6 +87,7 @@ export class ProductsService {
     const data = await this.productModel
       .find(query)
       .populate('category', 'name slug')
+      .populate('categories', 'name slug')
       .sort(SORT_MAP[sort] ?? SORT_MAP.popular)
       .skip((page - 1) * limit)
       .limit(limit)
@@ -72,9 +97,13 @@ export class ProductsService {
   }
 
   findFeatured() {
+    // Les plus récemment ajoutés/mis en avant d'abord → un produit fraîchement
+    // coché « Mis en avant » apparaît tout de suite en page d'accueil.
     return this.productModel
       .find({ isFeatured: true, isArchived: false, isAvailable: true })
       .populate('category', 'name slug')
+      .populate('categories', 'name slug')
+      .sort({ updatedAt: -1, createdAt: -1 })
       .limit(8)
       .exec();
   }
@@ -93,12 +122,23 @@ export class ProductsService {
     return product;
   }
 
-  // Normalise category en ObjectId (le front l'envoie en string)
+  // Normalise category + categories[] en ObjectId (le front les envoie en string)
   private normalizeCategory<T extends Record<string, unknown>>(data: T): T {
-    if (data.category && isValidObjectId(data.category)) {
-      return { ...data, category: new Types.ObjectId(data.category as string) };
+    const out: Record<string, unknown> = { ...data };
+    if (out.category && isValidObjectId(out.category)) {
+      out.category = new Types.ObjectId(out.category as string);
     }
-    return data;
+    if (Array.isArray(out.categories)) {
+      const ids = (out.categories as unknown[])
+        .filter((c) => isValidObjectId(c as string))
+        .map((c) => new Types.ObjectId(c as string));
+      out.categories = ids;
+      // garantit que la catégorie principale fait partie des familles
+      if (out.category && !ids.some((x) => x.equals(out.category as Types.ObjectId))) {
+        out.categories = [out.category as Types.ObjectId, ...ids];
+      }
+    }
+    return out as T;
   }
 
   async create(data: Partial<Product>) {

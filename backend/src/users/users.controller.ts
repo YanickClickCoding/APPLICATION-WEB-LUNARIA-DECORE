@@ -26,6 +26,11 @@ export class UsersController {
     return this.usersService.update(String(user._id), data);
   }
 
+  @Get('me/favorites')
+  getFavorites(@CurrentUser() user: UserDocument) {
+    return this.usersService.getCleanFavorites(String(user._id));
+  }
+
   @Patch('me/favorites/:productId')
   addFavorite(
     @CurrentUser() user: UserDocument,

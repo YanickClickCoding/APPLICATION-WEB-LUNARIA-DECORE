@@ -54,7 +54,7 @@ function PromoForm({ onClose }: { onClose: () => void }) {
         <form onSubmit={(e) => { e.preventDefault(); save.mutate() }} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div><label style={lbl}>Code *</label><input required className="field mono" style={{ textTransform: 'uppercase', fontFamily: 'var(--mono)' }} value={form.code} onChange={(e) => set('code', e.target.value.toUpperCase())} placeholder="SAINTVALENTIN25" /></div>
           <div><label style={lbl}>Description</label><input className="field" value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="Saint-Valentin 2026" /></div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="lun-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
               <label style={lbl}>Type *</label>
               <select className="field" style={{ cursor: 'pointer' }} value={form.type} onChange={(e) => set('type', e.target.value)}>
@@ -64,7 +64,7 @@ function PromoForm({ onClose }: { onClose: () => void }) {
             </div>
             <div><label style={lbl}>Valeur *</label><input required type="number" className="field" value={form.value} onChange={(e) => set('value', e.target.value)} placeholder={form.type === 'POURCENTAGE' ? '20' : '2000'} /></div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="lun-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div><label style={lbl}>Min. commande</label><input type="number" className="field" value={form.minOrderAmount} onChange={(e) => set('minOrderAmount', e.target.value)} placeholder="0" /></div>
             <div><label style={lbl}>Usages max</label><input type="number" className="field" value={form.maxUses} onChange={(e) => set('maxUses', e.target.value)} placeholder="∞" /></div>
           </div>

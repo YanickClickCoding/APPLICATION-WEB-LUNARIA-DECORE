@@ -77,8 +77,8 @@ function OrderDetail({ id, onBack }: { id: string; onBack: () => void }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-        <div style={{ flex: 1.6 }}>
+      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <div style={{ flex: '1.6 1 320px' }}>
           <div style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: 20 }}>
             <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--line-2)', fontSize: 15, fontWeight: 700, fontFamily: 'var(--serif)' }}>Articles</div>
             {order.items.map((it, i) => (
@@ -107,7 +107,7 @@ function OrderDetail({ id, onBack }: { id: string; onBack: () => void }) {
           </div>
         </div>
 
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: '1 1 280px' }}>
           <div style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', padding: 22, marginBottom: 20 }}>
             <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--serif)', marginBottom: 14 }}>Client</div>
             <div style={{ fontSize: 14.5, fontWeight: 700, marginBottom: 10 }}>{order.client?.firstName} {order.client?.lastName}</div>
@@ -176,7 +176,7 @@ export default function AdminOrders() {
           ))}
         </div>
       </div>
-      <div style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+      <div className="lun-table" style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr 120px 130px', padding: '14px 24px', fontSize: 11.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--line-2)' }}>
           <span>Réf.</span><span>Client</span><span>Articles</span><span>Total</span><span>Statut</span>
         </div>

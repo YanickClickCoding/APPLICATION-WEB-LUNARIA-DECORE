@@ -1,19 +1,35 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader2, Truck, UserCheck } from 'lucide-react'
+import Icon from '@/components/ui/Icon'
 import api from '@/services/api'
 
-const STATUS_COLOR: Record<string, string> = {
-  EN_ATTENTE: 'text-yellow-400 bg-yellow-400/10',
-  ASSIGNE:    'text-blue-400 bg-blue-400/10',
-  RECUPERE:   'text-purple-400 bg-purple-400/10',
-  EN_ROUTE:   'text-orange-400 bg-orange-400/10',
-  LIVRE:      'text-emerald-400 bg-emerald-400/10',
-  ECHEC:      'text-red-400 bg-red-400/10',
+const STATUS_LABELS: Record<string, string> = {
+  EN_ATTENTE: 'En attente',
+  ASSIGNE: 'Assigné',
+  RECUPERE: 'Récupéré',
+  EN_ROUTE: 'En route',
+  LIVRE: 'Livré',
+  ECHEC: 'Échoué',
 }
-const STATUS_LABELS: Record<string, string> = { EN_ATTENTE: 'En attente', ASSIGNE: 'Assigné', RECUPERE: 'Récupéré', EN_ROUTE: 'En route', LIVRE: 'Livré', ECHEC: 'Échoué' }
+const STATUS_COLOR: Record<string, string> = {
+  EN_ATTENTE: 'var(--gold)',
+  ASSIGNE: '#3b82f6',
+  RECUPERE: '#8b5cf6',
+  EN_ROUTE: 'var(--coral)',
+  LIVRE: '#3ec47a',
+  ECHEC: 'var(--coral-deep)',
+}
 
-interface Delivery { _id: string; order: { orderNumber: string; total: number }; livreur?: { firstName: string; lastName: string }; status: string; estimatedDate: string; address: { quartier: string; ville: string } }
+interface Delivery {
+  _id: string
+  order: { orderNumber: string; total: number }
+  livreur?: { firstName: string; lastName: string }
+  status: string
+  estimatedDate: string
+  address: { quartier?: string; ville?: string }
+}
+
+const COLS = '1.2fr 1.8fr 1.4fr 1.2fr 130px 120px'
 
 export default function AdminDelivery() {
   const qc = useQueryClient()
@@ -30,71 +46,71 @@ export default function AdminDelivery() {
   })
 
   const deliveries = data?.data ?? []
+  const filters: [string, string][] = [['', 'Toutes'], ...Object.entries(STATUS_LABELS)]
 
   return (
-    <div className="p-6 md:p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div><p className="text-[#C9A96E] text-xs tracking-widest uppercase mb-1">Gestion</p>
-          <h1 className="font-heading text-3xl text-white font-light">Livraisons</h1></div>
-        <div className="flex items-center gap-2 bg-[#160D2B] border border-white/10 rounded-xl px-3 py-2">
-          <Truck size={14} className="text-[#C9A96E]" />
-          <span className="text-white/60 text-sm">{deliveries.length} livraison{deliveries.length > 1 ? 's' : ''}</span>
+    <div className="lun-admin-page">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 22, gap: 14, flexWrap: 'wrap' }}>
+        <div>
+          <div className="eyebrow">Gestion</div>
+          <h1 className="display" style={{ fontSize: 36, margin: '6px 0 0' }}>Livraisons</h1>
         </div>
+        <span className="tag" style={{ background: 'var(--ivory-2)', color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="truck" size={15} color="var(--coral)" /> {deliveries.length} livraison{deliveries.length > 1 ? 's' : ''}
+        </span>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-6">
-        {[{ v: '', l: 'Toutes' }, ...Object.entries(STATUS_LABELS).map(([v, l]) => ({ v, l }))].map(({ v, l }) => (
-          <button key={v} onClick={() => setStatusFilter(v)} className={`px-3 py-1.5 rounded-lg text-xs transition-all ${statusFilter === v ? 'bg-[#C9A96E] text-[#0D0618] font-semibold' : 'border border-white/15 text-white/40 hover:border-[#C9A96E]/40'}`}>{l}</button>
+      {/* Filtres statut */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
+        {filters.map(([v, l]) => (
+          <button key={v} type="button" onClick={() => setStatusFilter(v)} aria-pressed={statusFilter === v}
+            className={`chip ${statusFilter === v ? 'chip-active' : ''}`}
+            style={{ fontSize: 12.5, padding: '7px 14px', cursor: 'pointer', font: 'inherit' }}>
+            {l}
+          </button>
         ))}
       </div>
 
-      <div className="bg-[#160D2B] border border-white/10 rounded-2xl overflow-hidden">
-        <table className="w-full">
-          <thead><tr className="border-b border-white/5">
-            {['Commande', 'Adresse', 'Livreur', 'Date prévue', 'Statut', 'Action'].map((h) => (
-              <th key={h} className="text-left text-white/25 text-xs font-medium tracking-wider px-5 py-3 uppercase">{h}</th>
-            ))}
-          </tr></thead>
-          <tbody>
-            {isLoading ? <tr><td colSpan={6} className="py-12 text-center"><Loader2 size={20} className="animate-spin text-[#C9A96E] mx-auto" /></td></tr>
-            : deliveries.length === 0 ? <tr><td colSpan={6} className="py-12 text-center text-white/25 text-sm">Aucune livraison</td></tr>
-            : deliveries.map((d) => (
-              <tr key={d._id} className="border-b border-white/5 hover:bg-white/2 transition-colors">
-                <td className="px-5 py-4 text-[#C9A96E] text-sm font-mono">{d.order?.orderNumber}</td>
-                <td className="px-5 py-4 text-white/60 text-sm">
-                  {(d.address as { quartier?: string; ville?: string })?.quartier}, {(d.address as { quartier?: string; ville?: string })?.ville}
-                </td>
-                <td className="px-5 py-4">
-                  {d.livreur ? (
-                    <span className="flex items-center gap-1.5 text-white/70 text-sm"><UserCheck size={13} className="text-emerald-400" />{d.livreur.firstName}</span>
-                  ) : <span className="text-white/25 text-sm italic">Non assigné</span>}
-                </td>
-                <td className="px-5 py-4 text-white/40 text-xs">
-                  {d.estimatedDate ? new Date(d.estimatedDate).toLocaleDateString('fr-FR') : '—'}
-                </td>
-                <td className="px-5 py-4">
-                  <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLOR[d.status] ?? 'text-white/40 bg-white/5'}`}>
-                    {STATUS_LABELS[d.status] ?? d.status}
-                  </span>
-                </td>
-                <td className="px-5 py-4">
-                  {d.status === 'EN_ATTENTE' && (
-                    <button onClick={() => updateStatus.mutate({ id: d._id, status: 'ASSIGNE' })}
-                      className="text-xs text-[#C9A96E] hover:underline">Assigner</button>
-                  )}
-                  {d.status === 'ASSIGNE' && (
-                    <button onClick={() => updateStatus.mutate({ id: d._id, status: 'EN_ROUTE' })}
-                      className="text-xs text-orange-400 hover:underline">→ En route</button>
-                  )}
-                  {d.status === 'EN_ROUTE' && (
-                    <button onClick={() => updateStatus.mutate({ id: d._id, status: 'LIVRE' })}
-                      className="text-xs text-emerald-400 hover:underline">✓ Livré</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="lun-table" style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: COLS, padding: '14px 24px', fontSize: 11.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--line-2)' }}>
+          <span>Commande</span><span>Adresse</span><span>Livreur</span><span>Date prévue</span><span>Statut</span><span>Action</span>
+        </div>
+
+        {isLoading ? (
+          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--muted)' }}>Chargement…</div>
+        ) : deliveries.length === 0 ? (
+          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--muted)' }}>Aucune livraison {statusFilter ? 'pour ce filtre' : ''}.</div>
+        ) : deliveries.map((d, i) => (
+          <div key={d._id} style={{ display: 'grid', gridTemplateColumns: COLS, alignItems: 'center', padding: '14px 24px', borderBottom: i < deliveries.length - 1 ? '1px solid var(--line-2)' : 'none', fontSize: 13.5 }}>
+            <span className="mono" style={{ fontSize: 12.5, color: 'var(--coral-deep)', fontWeight: 600 }}>{d.order?.orderNumber ?? '—'}</span>
+            <span style={{ color: 'var(--muted)' }}>{[d.address?.quartier, d.address?.ville].filter(Boolean).join(', ') || '—'}</span>
+            <span>
+              {d.livreur ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <Icon name="user" size={13} color="#3ec47a" /> {d.livreur.firstName}
+                </span>
+              ) : <span style={{ color: 'var(--muted-2)', fontStyle: 'italic' }}>Non assigné</span>}
+            </span>
+            <span style={{ color: 'var(--muted)', fontSize: 13 }}>{d.estimatedDate ? new Date(d.estimatedDate).toLocaleDateString('fr-FR') : '—'}</span>
+            <span className="tag" style={{ background: 'var(--ivory-2)', color: STATUS_COLOR[d.status] ?? 'var(--muted)', fontWeight: 700, justifySelf: 'start' }}>
+              ● {STATUS_LABELS[d.status] ?? d.status}
+            </span>
+            <span>
+              {d.status === 'EN_ATTENTE' && (
+                <button onClick={() => updateStatus.mutate({ id: d._id, status: 'ASSIGNE' })} disabled={updateStatus.isPending}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: '#3b82f6' }}>Assigner</button>
+              )}
+              {d.status === 'ASSIGNE' && (
+                <button onClick={() => updateStatus.mutate({ id: d._id, status: 'EN_ROUTE' })} disabled={updateStatus.isPending}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: 'var(--coral)' }}>→ En route</button>
+              )}
+              {d.status === 'EN_ROUTE' && (
+                <button onClick={() => updateStatus.mutate({ id: d._id, status: 'LIVRE' })} disabled={updateStatus.isPending}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: '#3ec47a' }}>✓ Livré</button>
+              )}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   )

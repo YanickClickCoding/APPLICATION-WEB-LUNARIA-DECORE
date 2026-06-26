@@ -1,5 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
+import { useAuthStore } from '@/stores/useAuthStore'
+import { useCartStore } from '@/stores/useCartStore'
 import PublicLayout from '@/components/layout/PublicLayout'
 import ClientLayout from '@/components/layout/ClientLayout'
 import AdminLayout from '@/components/layout/AdminLayout'
@@ -17,6 +19,9 @@ const ServicesPage   = lazy(() => import('@/pages/public/ServicesPage'))
 const ServicePage    = lazy(() => import('@/pages/public/ServicePage'))
 const GaleriePage    = lazy(() => import('@/pages/public/GaleriePage'))
 const AboutPage      = lazy(() => import('@/pages/public/AboutPage'))
+const ContactPage    = lazy(() => import('@/pages/public/ContactPage'))
+const FaqPage        = lazy(() => import('@/pages/public/FaqPage'))
+const BlogPage       = lazy(() => import('@/pages/public/BlogPage'))
 const AuthPage       = lazy(() => import('@/pages/public/AuthPage'))
 
 // ─── Client pages ───────────────────────────────────────────────
@@ -53,6 +58,15 @@ const ProfilePage     = lazy(() => import('@/pages/client/ProfilePage'))
 const NotFoundPage    = lazy(() => import('@/pages/public/NotFoundPage'))
 
 export default function App() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const hydrateCart = useCartStore((s) => s.hydrateFromServer)
+
+  // Au démarrage, si un compte est déjà connecté (token persisté),
+  // on recharge son panier depuis le backend (source de vérité).
+  useEffect(() => {
+    if (isAuthenticated) hydrateCart()
+  }, [isAuthenticated, hydrateCart])
+
   return (
     <>
     <ToastContainer />
@@ -69,6 +83,9 @@ export default function App() {
           <Route path="/service/:slug"  element={<ServicePage />} />
           <Route path="/galerie"        element={<GaleriePage />} />
           <Route path="/a-propos"       element={<AboutPage />} />
+          <Route path="/contact"        element={<ContactPage />} />
+          <Route path="/faq"            element={<FaqPage />} />
+          <Route path="/blog"           element={<BlogPage />} />
           <Route path="/connexion"      element={<AuthPage initialMode="login" />} />
           <Route path="/inscription"    element={<AuthPage initialMode="signup" />} />
         </Route>

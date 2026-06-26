@@ -1,17 +1,34 @@
 import { useState, useEffect } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import Logo from '@/components/ui/Logo'
 import Icon from '@/components/ui/Icon'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useCartStore } from '@/stores/useCartStore'
 import { useChatStore } from '@/stores/useChatStore'
 
-const LINKS = [
+interface NavChild { label: string; to: string }
+interface NavItem { label: string; to?: string; children?: NavChild[] }
+
+const LINKS: NavItem[] = [
   { label: 'Accueil', to: '/' },
   { label: 'Boutique', to: '/catalogue' },
-  { label: 'Décorations', to: '/services' },
+  {
+    label: 'Services',
+    children: [
+      { label: 'Nos décorations', to: '/services' },
+      { label: 'Devis / Planifier', to: '/compte/planification' },
+    ],
+  },
   { label: 'Réalisations', to: '/galerie' },
-  { label: 'À propos', to: '/a-propos' },
+  {
+    label: 'À propos',
+    children: [
+      { label: 'Notre histoire', to: '/a-propos' },
+      { label: 'FAQ / Aide', to: '/faq' },
+      { label: 'Blog / Inspirations', to: '/blog' },
+      { label: 'Contact', to: '/contact' },
+    ],
+  },
 ]
 
 interface NavbarProps { dark?: boolean }
@@ -19,10 +36,13 @@ interface NavbarProps { dark?: boolean }
 export default function Navbar({ dark = false }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [openMenu, setOpenMenu] = useState<string | null>(null)
   const { isAuthenticated, user } = useAuthStore()
   const { itemCount, openCart } = useCartStore()
   const { unreadTotal } = useChatStore()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const childActive = (item: NavItem) => !!item.children?.some((c) => pathname === c.to)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30)
@@ -47,17 +67,41 @@ export default function Navbar({ dark = false }: NavbarProps) {
       <Logo color={fg} mark={onDark ? 'var(--gold-bright)' : 'var(--coral)'} />
 
       <nav className="lun-nav-links">
-        {LINKS.map((l) => (
-          <NavLink key={l.to} to={l.to} end={l.to === '/'} className="lun-nav-link"
-            style={({ isActive }) => ({ color: isActive ? fg : sub, fontWeight: isActive ? 600 : 500 })}>
-            {({ isActive }) => (
-              <>
+        {LINKS.map((l) =>
+          l.children ? (
+            <div key={l.label} className={`lun-nav-item${openMenu === l.label ? ' is-open' : ''}`}
+              onMouseEnter={() => setOpenMenu(l.label)}
+              onMouseLeave={() => setOpenMenu(null)}>
+              <button type="button" className="lun-nav-link lun-nav-trigger"
+                aria-haspopup="true" aria-expanded={openMenu === l.label}
+                onClick={() => setOpenMenu(openMenu === l.label ? null : l.label)}
+                style={{ color: childActive(l) ? fg : sub, fontWeight: childActive(l) ? 600 : 500 }}>
                 {l.label}
-                {isActive && <span className="lun-nav-underline" />}
-              </>
-            )}
-          </NavLink>
-        ))}
+                <Icon name="chevd" size={14} color={childActive(l) ? fg : sub} />
+                {childActive(l) && <span className="lun-nav-underline" />}
+              </button>
+              <div className="lun-nav-dropdown">
+                {l.children.map((c) => (
+                  <NavLink key={c.to} to={c.to} className="lun-nav-dropitem"
+                    onClick={(e) => { setOpenMenu(null); (e.currentTarget as HTMLElement).blur() }}
+                    style={({ isActive }) => ({ color: isActive ? 'var(--coral-deep)' : 'var(--ink)', fontWeight: isActive ? 700 : 500 })}>
+                    {c.label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <NavLink key={l.to} to={l.to!} end={l.to === '/'} className="lun-nav-link"
+              style={({ isActive }) => ({ color: isActive ? fg : sub, fontWeight: isActive ? 600 : 500 })}>
+              {({ isActive }) => (
+                <>
+                  {l.label}
+                  {isActive && <span className="lun-nav-underline" />}
+                </>
+              )}
+            </NavLink>
+          ),
+        )}
       </nav>
 
       <div className="lun-nav-actions" style={{ color: fg }}>
@@ -115,11 +159,22 @@ export default function Navbar({ dark = false }: NavbarProps) {
 
       {menuOpen && (
         <div className="lun-mobile-menu">
-          {LINKS.map((l) => (
-            <NavLink key={l.to} to={l.to} end={l.to === '/'} onClick={() => setMenuOpen(false)} className="lun-mobile-link">
-              {l.label}
-            </NavLink>
-          ))}
+          {LINKS.map((l) =>
+            l.children ? (
+              <div key={l.label} className="lun-mobile-group">
+                <span className="lun-mobile-grouplabel">{l.label}</span>
+                {l.children.map((c) => (
+                  <NavLink key={c.to} to={c.to} onClick={() => setMenuOpen(false)} className="lun-mobile-link lun-mobile-sublink">
+                    {c.label}
+                  </NavLink>
+                ))}
+              </div>
+            ) : (
+              <NavLink key={l.to} to={l.to!} end={l.to === '/'} onClick={() => setMenuOpen(false)} className="lun-mobile-link">
+                {l.label}
+              </NavLink>
+            ),
+          )}
           {!isAuthenticated ? (
             <button onClick={() => { setMenuOpen(false); navigate('/connexion') }} className="btn btn-dark" style={{ marginTop: 10 }}>Se connecter</button>
           ) : (

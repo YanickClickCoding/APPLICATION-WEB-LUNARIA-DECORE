@@ -77,7 +77,7 @@ export default function AdminPayments() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 22 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 22 }}>
         {kpis.map(([l, v, c]) => (
           <div key={l} style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-md)', padding: '18px 22px' }}>
             <div style={{ fontSize: 13, color: 'var(--muted)' }}>{l}</div>
@@ -86,7 +86,7 @@ export default function AdminPayments() {
         ))}
       </div>
 
-      <div style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+      <div className="lun-table" style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '90px 120px 1fr 130px 90px 120px 120px 110px', padding: '14px 24px', fontSize: 11.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--line-2)' }}>
           <span>Date</span><span>Commande</span><span>Client</span><span>Moyen</span><span>Type</span><span>Montant</span><span>Statut</span><span>Action</span>
         </div>

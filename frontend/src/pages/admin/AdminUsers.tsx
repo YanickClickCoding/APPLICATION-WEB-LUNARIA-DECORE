@@ -39,7 +39,7 @@ function AddClientForm({ onClose }: { onClose: () => void }) {
           <button onClick={onClose} aria-label="Fermer" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: 'var(--muted)' }}><Icon name="close" size={20} /></button>
         </div>
         <form onSubmit={(e) => { e.preventDefault(); if (valid) save.mutate() }} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="lun-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div><label style={lbl}>Prénom *</label><input required className="field" value={form.firstName} onChange={(e) => set('firstName', e.target.value)} placeholder="Aïcha" /></div>
             <div><label style={lbl}>Nom *</label><input required className="field" value={form.lastName} onChange={(e) => set('lastName', e.target.value)} placeholder="Hounkpati" /></div>
           </div>
@@ -80,7 +80,7 @@ export default function AdminUsers() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22, gap: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22, gap: 14, flexWrap: 'wrap' }}>
         <div>
           <div className="eyebrow">Gestion</div>
           <h1 className="display" style={{ fontSize: 36, margin: '6px 0 0' }}>Clients</h1>
@@ -96,7 +96,7 @@ export default function AdminUsers() {
         <input className="field" style={{ paddingLeft: 40 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un client…" />
       </div>
 
-      <div style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+      <div className="lun-table" style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.4fr 1fr 110px 120px', padding: '14px 24px', fontSize: 11.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--line-2)' }}>
           <span>Client</span><span>Contact</span><span>Inscription</span><span>Statut</span><span></span>
         </div>

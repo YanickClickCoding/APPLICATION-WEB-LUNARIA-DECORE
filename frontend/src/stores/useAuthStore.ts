@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User } from '@/types'
 import { useCartStore } from './useCartStore'
+import { cartService } from '@/services/cart.service'
 
 interface AuthState {
   user: User | null
@@ -24,9 +25,15 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (user, accessToken, refreshToken) => {
         localStorage.setItem('accessToken', accessToken)
         localStorage.setItem('refreshToken', refreshToken)
-        // Repart sur un panier propre : il ne doit jamais suivre d'un compte/visiteur à l'autre
-        useCartStore.getState().clear()
+        // Capture le panier invité avant de basculer en mode connecté
+        const guestItems = useCartStore.getState().items
         set({ user, accessToken, refreshToken, isAuthenticated: true })
+        // Fusionne le panier invité dans celui du compte, puis réhydrate depuis le serveur.
+        // (le token est déjà en localStorage : l'intercepteur API l'enverra)
+        cartService
+          .merge(guestItems)
+          .then((serverItems) => useCartStore.getState().setItems(serverItems))
+          .catch(() => useCartStore.getState().hydrateFromServer())
       },
 
       setUser: (user) => set({ user }),
@@ -34,9 +41,10 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
-        // Le panier appartient à la session : on le vide à la déconnexion
-        useCartStore.getState().clear()
+        // On bascule en non-connecté AVANT de vider, pour ne pas envoyer
+        // de requête DELETE /cart au serveur (le panier reste en base).
         set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false })
+        useCartStore.getState().setItems([])
       },
     }),
     {

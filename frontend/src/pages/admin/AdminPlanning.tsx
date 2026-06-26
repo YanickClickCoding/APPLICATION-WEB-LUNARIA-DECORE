@@ -199,7 +199,7 @@ export default function AdminPlanning() {
           ))}
         </div>
       </div>
-      <div style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+      <div className="lun-table" style={{ background: 'var(--paper)', border: '1px solid var(--line-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '140px 1.2fr 1fr 110px 130px 140px 40px', padding: '14px 24px', fontSize: 11.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--line-2)' }}>
           <span>Réf.</span><span>Client</span><span>Événement</span><span>Date</span><span>Budget</span><span>Statut</span><span></span>
         </div>

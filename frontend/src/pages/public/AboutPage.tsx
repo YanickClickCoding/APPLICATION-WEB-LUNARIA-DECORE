@@ -84,11 +84,12 @@ export default function AboutPage() {
             <h2 className="display sec-title">Nos valeurs</h2>
           </div>
           <div className="grid grid-4 lun-about-values">
-            {VALUES.map(([ic, t, d]) => (
-              <div key={t} className="lun-about-value">
-                <span className="lun-step-ico"><Icon name={ic} size={24} color="var(--coral)" /></span>
-                <div className="serif lun-step-title">{t}</div>
-                <p className="lun-step-desc">{d}</p>
+            {VALUES.map(([ic, t, d], i) => (
+              <div key={t} className="lun-value-card">
+                <span className="lun-value-ico"><Icon name={ic} size={24} color="#fff" /></span>
+                <span className="lun-value-idx">0{i + 1}</span>
+                <div className="serif lun-value-title">{t}</div>
+                <p className="lun-value-desc">{d}</p>
               </div>
             ))}
           </div>
